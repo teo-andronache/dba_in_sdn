@@ -6,7 +6,9 @@ from mininet.node import RemoteController, Controller
 from mininet.link import TCLink
 from mininet.cli import CLI
 from mininet.log import setLogLevel
-import time, random, re
+from traffic_tests.run_ping import run_ping
+from traffic_tests.run_stress_test_iperf_tcp import run_stress_test_iperf_tcp
+
 
 class ThreeTierTopo(Topo):
     """
@@ -55,54 +57,13 @@ class ThreeTierTopo(Topo):
                              delay=self.delay)
                 host_id += 1
 
-### Traffic test scenarios ###
-def run_ping(net):
-    """Ping all hosts in the network."""
-    print('*** TEST: Ping all hosts ***')
-    net.pingAll()
-
-def run_stress_test_iperf_tcp(net, pairs, duration=10, base_port=5000):
-    """Run iperf TCP for each pair; log per-flow throughput and Jain fairness."""
-    print('*** TEST: Stress test iperf TCP ***')
-    servers = []
-    for idx, (src, dst) in enumerate(pairs, start=1):
-        port = base_port + idx
-        srv = net.get(dst)
-        servers.append(srv.popen(f'iperf -s -p {port}'))
-    time.sleep(1)
-    throughputs = []
-    pat = re.compile(r'([\d\.]+) Mbits/sec')
-    clients = []
-    for idx, (src, dst) in enumerate(pairs, start=1):
-        cli = net.get(src)
-        dst_h = net.get(dst)
-        port = base_port + idx
-        clients.append((src, dst, cli.popen(f'iperf -c {dst_h.IP()} -p {port} -t {duration}')))
-    for src, dst, p in clients:
-        out, _ = p.communicate()
-        text = out.decode(errors='ignore')
-        m = pat.search(text)
-        if m:
-            val = float(m.group(1))
-            throughputs.append(val)
-            print(f'{src}->{dst} throughput={val:.2f} Mbit/s')
-    for p in servers: p.terminate()
-    if throughputs:
-        n = len(throughputs)
-        fairness_index = (sum(throughputs)**2) / (n * sum(x*x for x in throughputs))
-        print(f'avg_throughput={sum(throughputs)/n:.2f} Mbit/s')
-        print(f'total_throughput={sum(throughputs):.2f} Mbit/s')
-        print(f'fairness_index={fairness_index:.3f}')
-    else:
-        print('throughput: no data')
-
 if __name__ == '__main__':
-    NUM_HOSTS = 16
+    TOTAL_HOSTS = 16
     BW = 100
     CORE_BW = 200
     DELAY = '1ms'
     DURATION = 60
-    topo = ThreeTierTopo(num_hosts=NUM_HOSTS, bw=BW,core_bw=CORE_BW, delay=DELAY)
+    topo = ThreeTierTopo(num_hosts=TOTAL_HOSTS, bw=BW,core_bw=CORE_BW, delay=DELAY)
     net = Mininet(
         topo=topo,
         controller=Controller,
@@ -116,7 +77,7 @@ if __name__ == '__main__':
 
     # TEST: Stress test with TCP iperf 
     # Default pairs: first half hosts -> second half hosts to stress test the bottleneck links
-    half = NUM_HOSTS // 2
+    half = TOTAL_HOSTS // 2
     pairs = [(f'h{i}', f'h{i+half}') for i in range(1, half+1)]
     run_stress_test_iperf_tcp(net, pairs, duration=DURATION, base_port=5000)
 

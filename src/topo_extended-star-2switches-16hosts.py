@@ -6,7 +6,9 @@ from mininet.node import Controller, RemoteController
 from mininet.link import TCLink
 from mininet.cli import CLI
 from mininet.log import setLogLevel
-import time
+from traffic_tests.run_ping import run_ping
+from traffic_tests.run_stress_test_iperf_tcp import run_stress_test_iperf_tcp
+
 
 class ExtendedStarTopo(Topo):
     """
@@ -38,44 +40,7 @@ class ExtendedStarTopo(Topo):
                 self.addLink(sw, h, bw=self.host_bw, delay=self.delay)
                 host_id += 1
 
-
-def run_ping(net):
-    """Ping all hosts in the network."""
-    print('*** TEST: Ping all hosts')
-    net.pingAll()
-
-
-def run_iperf_scenario(net, pairs, duration=10, base_port=5000):
-    """
-    Run iperf TCP tests for given list of (src, dst) tuples concurrently.
-    """
-    servers = []
-    for idx, (src, dst) in enumerate(pairs, start=1):
-        port = base_port + idx
-        srv = net.get(dst)
-        print(f'*** Starting iperf server on {srv.name} port {port}')
-        servers.append(srv.popen(f'iperf -s -p {port}'))
-    time.sleep(1)
-
-    clients = []
-    for idx, (src, dst) in enumerate(pairs, start=1):
-        cli = net.get(src)
-        dst_h = net.get(dst)
-        port = base_port + idx
-        print(f'*** Testing {cli.name} -> {dst_h.name} on port {port}')
-        clients.append((cli, cli.popen(f'iperf -c {dst_h.IP()} -p {port} -t {duration}')))
-
-    for cli, p in clients:
-        out, _ = p.communicate()
-        print(f'*** {cli.name} result:\n{out.decode().strip()}')
-
-    for p in servers:
-        p.terminate()
-
-
 if __name__ == '__main__':
-    setLogLevel('info')
-    # Configurable parameters
     TOTAL_HOSTS = 16               # total across both switches
     HOSTS_PER_SWITCH = TOTAL_HOSTS // 2
     HOST_BW = 100                  # Mbps for host links
@@ -89,20 +54,18 @@ if __name__ == '__main__':
         inter_bw=INTER_SWITCH_BW,
         delay=DELAY
     )
-    net = Mininet(
-        topo=topo,
-        controller=Controller,
-        link=TCLink
-    )
+    net = Mininet(topo=topo, controller=Controller, link=TCLink)
     net.start()
 
-    # Basic connectivity
+    # TEST: Basic connectivity
     run_ping(net)
 
-    # Default pairs: first half hosts -> second half hosts
-    pairs = [(f'h{i}', f'h{i+HOSTS_PER_SWITCH}') for i in range(1, HOSTS_PER_SWITCH+1)]
-    run_iperf_scenario(net, pairs, duration=DURATION, base_port=5000)
+    # TEST: Stress test with TCP iperf 
+    # Default pairs: first half hosts -> second half hosts to stress test the bottleneck links
+    half = TOTAL_HOSTS // 2
+    pairs = [(f'h{i}', f'h{i+half}') for i in range(1, half+1)]
+    run_stress_test_iperf_tcp(net, pairs, duration=DURATION, base_port=5000)
 
     # Drop to CLI
-    CLI(net)
+    #CLI(net)
     net.stop()
