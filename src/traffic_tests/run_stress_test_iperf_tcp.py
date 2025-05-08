@@ -1,7 +1,21 @@
 import re,time
 
 def run_stress_test_iperf_tcp(net, pairs, duration=10, base_port=5000):
-    """Run iperf TCP for each pair; log per-flow throughput and Jain fairness."""
+    """
+    For each (src, dst) in `pairs`, launch the following flows:
+      - Bulk   (TCP)
+
+    Then parse each flow's rate and print per-flow stats plus:
+      - average_throughput : average throughput across all flows
+      - total_throughput  : total throughput across all flows
+      - fairness_index    : Jain's fairness index across all flows
+
+    Args:
+      net        : Mininet instance
+      pairs      : list of (srcHostName, dstHostName) tuples
+      duration   : test duration for each flow (sec)
+      base_port  : starting UDP/TCP port; each flow uses base_port + idx
+    """    
     print('*** TEST: Stress test iperf TCP ***')
     servers = []
     for idx, (src, dst) in enumerate(pairs, start=1):

@@ -8,6 +8,7 @@ from mininet.cli import CLI
 from mininet.log import setLogLevel
 from traffic_tests.run_ping import run_ping
 from traffic_tests.run_stress_test_iperf_tcp import run_stress_test_iperf_tcp
+from traffic_tests.run_traffic_mix_voip_video_bulk import run_traffic_mix_voip_video_bulk
 
 
 class ThreeTierTopo(Topo):
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     BW = 100
     CORE_BW = 200
     DELAY = '1ms'
-    DURATION = 60
+    DURATION = 20
     topo = ThreeTierTopo(num_hosts=TOTAL_HOSTS, bw=BW,core_bw=CORE_BW, delay=DELAY)
     net = Mininet(
         topo=topo,
@@ -80,6 +81,11 @@ if __name__ == '__main__':
     half = TOTAL_HOSTS // 2
     pairs = [(f'h{i}', f'h{i+half}') for i in range(1, half+1)]
     run_stress_test_iperf_tcp(net, pairs, duration=DURATION, base_port=5000)
+
+    # TEST: Run traffic mix (VoIP, Video, Bulk) between hosts on different switches
+    # This will run 24 flows in parallel: 3 flows per host for first 8 hosts
+    # (VoIP, Video, Bulk) to the corresponding host on the other switch
+    run_traffic_mix_voip_video_bulk(net, pairs, duration=DURATION, base_port=6000)
 
     #CLI(net)
     net.stop()
