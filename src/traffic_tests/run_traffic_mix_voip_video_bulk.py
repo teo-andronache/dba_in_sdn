@@ -8,7 +8,7 @@ def run_traffic_mix_voip_video_bulk(net, pairs,
                          base_port=6000):
     """
     For each (src, dst) in `pairs`, launch three concurrent flows:
-      - VoIP   (UDP @ 64k)
+      - VoIP   (UDP @ 100k)
       - Video  (UDP @ 5m)
       - Bulk   (TCP)
     Then parse each flow's rate and print per-flow stats plus:
@@ -51,7 +51,7 @@ def run_traffic_mix_voip_video_bulk(net, pairs,
         cli = net.get(src)
         dst_h = net.get(dst)
         if ftype == 'voip':
-            args = '-u -b 64k'
+            args = '-u -b 100k'
         elif ftype == 'video':
             args = '-u -b 5m'
         else:
