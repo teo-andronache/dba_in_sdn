@@ -4,7 +4,10 @@
 This repository contains the code for two Mininet topologies (extended-star, three-tier tree) and two Ryu SDN Controller Algorithms (max-min fair share allocation, proactive algorithm). 
 
 ## Prerequisites
-- Mininet: https://mininet.org/download/ ; install it as a VM, then ssh into it via `ssh mininet@<mininet-vm-ip>` with password `mininet` or set-up ssh keys
+- [Mininet](https://mininet.org/download/)  ; install it as a VM, then ssh into it via `ssh mininet@<mininet-vm-ip>` with password `mininet` or set-up ssh keys
+- [Ryu](https://ryu.readthedocs.io/en/latest/getting_started.html): 
+    - Install on host computer and make sure there is connectivity with the mininet-vm; then update the controller IP in the /src/run_experiments.py file
+    - (Preffered) Install on the VM running Mininet and update the controller IP in the /src/run_experiments.py file to 127.0.0.1
 
 ## Running the experiments
 - Copy the `dba_in_sdn` directory on the Mininet VM
