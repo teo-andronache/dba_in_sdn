@@ -8,7 +8,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from mininet.net import Mininet
-from mininet.node import Controller, OVSSwitch
+from mininet.node import Controller,RemoteController, OVSSwitch
 from mininet.link import TCLink
 
 from topologies import ExtendedStarTopo, ThreeTierTopo
@@ -30,7 +30,17 @@ def run_on_topology(name, topo):
     Bring up Mininet with the given topology, run all tests, then tear down.
     """
     print(f"\n=== EXPERIMENTS ON {name} ===")
-    net = Mininet(topo=topo, controller=Controller, switch=OVSSwitch, link=TCLink)
+
+    net = Mininet(
+    topo=topo,
+    controller=lambda name: RemoteController(
+        name,
+        ip='192.168.184.129',    
+        port=6633         
+    ),
+    switch=OVSSwitch,
+    link=TCLink
+)
     net.start()
 
     # Define pairs: first half hosts -> second half

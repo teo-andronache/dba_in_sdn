@@ -8,14 +8,24 @@ This repository contains the code for two Mininet topologies (extended-star, thr
 
 ## Running the experiments
 - Copy the `dba_in_sdn` directory on the Mininet VM
-- SSH into mininet and run the experiments
-- Commands (fill in the IP address of the mininet-vm):
-```
+- SSH into mininet
+- Run the Ryu SDN Controller 
+- Open another terminal in mininet and run the experiments
+
+Commands (fill in the IP address of the mininet-vm):
+```bash
 teo@ubuntu:~$ scp -r dba_in_sdn mininet@<mininet-vm-ip>:~/
 
 teo@ubuntu:~$ ssh mininet@<mininet-vm-ip>
 
-mininet@mininet-vm:~$ cd dba_in_sdn/src/
+mininet@mininet-vm:~$ cd dba_in_sdn/src/controllers/
+
+mininet@mininet-vm:~/dba_in_sdn/src/controllers$ ryu-manager simple_switch_13.py
+
+# In another terminal, start the experiments
+teo@ubuntu:~$ ssh mininet@<mininet-vm-ip>
+
+mininet@mininet-vm:~$ cd dba_in_sdn/src
 
 mininet@mininet-vm:~/dba_in_sdn/src$ sudo python3 run_experiments.py
 ```
