@@ -8,7 +8,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from mininet.net import Mininet
-from mininet.node import Controller
+from mininet.node import Controller, OVSSwitch
 from mininet.link import TCLink
 
 from topologies import ExtendedStarTopo, ThreeTierTopo
@@ -22,7 +22,7 @@ NUM_HOSTS   = 16
 HOSTS_PER_SWITCH = NUM_HOSTS // 2
 BW          = 100    # Mbps for host–edge & edge–agg links
 CORE_BW     = 200    # Mbps for core–agg links (only for ThreeTierTopo)
-DELAY       = '10ms'
+DELAY       = '1ms'
 DURATION    = 60     # seconds for each iperf test
 
 def run_on_topology(name, topo):
@@ -30,7 +30,7 @@ def run_on_topology(name, topo):
     Bring up Mininet with the given topology, run all tests, then tear down.
     """
     print(f"\n=== EXPERIMENTS ON {name} ===")
-    net = Mininet(topo=topo, controller=Controller, link=TCLink)
+    net = Mininet(topo=topo, controller=Controller, switch=OVSSwitch, link=TCLink)
     net.start()
 
     # Define pairs: first half hosts -> second half
@@ -63,7 +63,7 @@ def run_on_topology(name, topo):
         pairs,
         total_time=DURATION,
         avg_interval=0.5,
-        dur_range=(0.1, 1.0),
+        dur_range=(1, 60),
         base_port=7000
     )
 

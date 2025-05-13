@@ -3,104 +3,152 @@ import time
 import random
 from collections import defaultdict
 
+def jain(xs):
+    """Jain's fairness index for a list of rates; returns 0 if no variation."""
+    if not xs:
+        return 0.0
+    s = sum(xs)
+    ss = sum(x*x for x in xs)
+    if ss == 0.0:
+        return 0.0
+    return (s*s) / (len(xs) * ss)
+
 def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
-                     total_time=60.0,
-                     avg_interval=0.5,
-                     dur_range=(1,10),
-                     base_port=7000):
+                                           total_time=60.0,
+                                           avg_interval=0.5,
+                                           dur_range=(1,10),
+                                           base_port=7000):
     """
-    Fire short bursts of three traffic types (VoIP, Video, Bulk) for total_time seconds:
-      - Inter-arrival ~ Exp(1/avg_interval)
-      - Durations uniform in dur_range (seconds)
-      - VoIP: UDP @ 100 kbit/s
-      - Video: UDP @ 5 Mbit/s
-      - Bulk: TCP (no -u flag)
-    Each burst picks a random (src,dst) pair from `pairs`, and a random type.
+    Fire bursts of three traffic types (VoIP, Video, Bulk):
+      - total_time (s) - duration of the test
+      - avg_interval (s) - average time between bursts
+      - dur_range (s) - range of burst durations
+      - VoIP: UDP @100kbps, Video: UDP @5Mbps, Bulk: TCP
+    At the end we wait on all of them, clip overruns to total_time,
+    parse CSV output, and compute per-burst + aggregate stats.
     """
-     # regex to catch Kbits/sec or Mbits/sec
-    pat = re.compile(r'([\d\.]+)\s+([KM]bits/sec)')
+    # one regex for both UDP and TCP CSV
+    csv_re = re.compile(r'''
+        (?P<ts>[^,]+),              # timestamp
+        (?P<src>[^,]+),(?P<sport>\d+),(?P<dst>[^,]+),(?P<dport>\d+),\d,
+        (?P<interval>[^,]+),
+        (?P<bytes>\d+),(?P<bits_per_sec>\d+)
+        (?:,(?P<jitter>[\d\.]+),(?P<lost>\d+),(?P<total>\d+))?  # UDP-only
+        (?:,(?P<retransmits>\d+))?                             # TCP-only
+    ''', re.VERBOSE)
 
-    # Prepare containers
     types = ['voip','video','bulk']
-    class_rates = {t: [] for t in types}
-    host_totals = defaultdict(float)
+    class_rates     = {t: []  for t in types}
+    class_data_mbit = {t: 0.0 for t in types}
+    host_rates      = defaultdict(list)
+    host_data_mbit  = defaultdict(float)
 
-    # Launch bursts
-    procs = []  # list of (src, ftype, popen, dur)
+    procs = []
     start = time.time()
-    i = 0
-    while time.time() - start < total_time:
-        src, dst = random.choice(pairs)
-        ftype     = random.choice(types)
-        dur       = random.uniform(*dur_range)
-        port      = base_port + i
+    idx = 0
 
-        # server flags
-        srv_flag = '-u -s' if ftype in ('voip','video') else '-s'
-        # client flags
-        if   ftype == 'voip':  cli_flag = '-u -b 100k'
-        elif ftype == 'video': cli_flag = '-u -b 5m'
-        else:                   cli_flag = ''
+    # 1) launch clients & servers
+    while True:
+        now = time.time()
+        if now - start >= total_time:
+            break
+
+        src, dst = random.choice(pairs)
+        ftype    = random.choice(types)
+        dur      = random.uniform(*dur_range)
+        port     = base_port + idx
+        t0       = now
+
+        if ftype in ('voip','video'):
+            srv_flag = '-u -s -i 1 -y C'
+            cli_flag = '-u -b 100k' if ftype=='voip' else '-u -b 5m'
+        else:
+            srv_flag = '-s -i 1 -y C'
+            cli_flag = ''
 
         # start server
         net.get(dst).popen(f'iperf {srv_flag} -p {port}')
         # start client
-        cmd = f'iperf {cli_flag} -c {net.get(dst).IP()} -p {port} -t {dur:.2f}'
-        print(f"*** Burst {i}: {src}->{dst} [{ftype}] dur={dur:.2f}s port={port}")
-        p = net.get(src).popen(cmd)
+        cmd = f'iperf {cli_flag} -c {net.get(dst).IP()} -p {port} -t {dur:.2f} -y C'
+        print(f"*** Burst {idx}: t0={t0-start:6.2f}s  {src}->{dst} [{ftype}] dur={dur:.2f}s port={port}")
+        proc = net.get(src).popen(cmd)
 
-        procs.append((src, ftype, p, dur))
-        i += 1
-        time.sleep(random.expovariate(1/avg_interval))
+        procs.append((src, ftype, proc, dur, t0))
+        idx += 1
+        time.sleep(random.expovariate(1.0/avg_interval))
 
-    # Collect and parse results
+    cutoff = start + total_time
+
+    # 2) collect & parse
     print("\n--- Burst Results ---")
-    for src, ftype, p, dur in procs:
-        out, _ = p.communicate()
-        text = out.decode(errors='ignore')
-        m = pat.search(text)
-        rate = 0.0
-        if m:
-            val, unit = float(m.group(1)), m.group(2)
-            rate = val/1000.0 if unit.startswith('K') else val
-        print(f"{src} [{ftype}] = {rate:.2f} Mbit/s")
-        class_rates[ftype].append(rate)
-        host_totals[src] += rate
+    print("t0        ; TYPE       ; rate(Mbit/s); jitter(ms); loss(%); dur(s); actual_dur(s)")
+    print("-"*70)
 
-    # Tear down any leftover servers
-    # (Note: iperf -s processes will exit when test ends)
+    for src, ftype, proc, dur, t0 in procs:
+        out, _ = proc.communicate()
+        lines = out.decode(errors='ignore').splitlines()
+        rate = jitter = loss = 0.0
 
-    # 4) Summary statistics
-    print('\n=== SUMMARY ===')
-    # overall
-    all_rates = [r for rates in class_rates.values() for r in rates]
-    if all_rates:
-        total   = sum(all_rates)
-        avg     = total / len(all_rates)
-        j_all   = (total**2) / (len(all_rates) * sum(r*r for r in all_rates))
-        print(f'Overall average_throughput = {avg:.2f} Mbit/s')
-        print(f'Overall total_throughput   = {total:.2f} Mbit/s')
-        print(f'Overall fairness_index     = {j_all:.3f}')
-    else:
-        print('No bursts completed')
+        # look for CSV output
+        for line in reversed(lines):
+            # CSV lines from iperf start with a timestamp (e.g. "2025...")
+            if line.startswith('2025'):
+                m = csv_re.match(line)
+                if not m:
+                    continue
+                rate = float(m.group('bits_per_sec')) / 1e6
 
-    # per-class
-    for ftype in types:
-        rates = class_rates[ftype]
-        if rates:
-            tot_c = sum(rates)
-            j_c   = (tot_c**2) / (len(rates)*sum(r*r for r in rates))
-            print(f'{ftype.capitalize()} fairness_index = {j_c:.3f}')
+                if ftype in ('voip','video'):
+                    jitter   = float(m.group('jitter') or 0.0)
+                    lost     = int(m.group('lost')   or 0)
+                    total_pk = int(m.group('total')  or 0)
+                    loss     = 100.0 * lost/total_pk if total_pk>0 else 0.0
+                else:
+                    # TCP: estimate loss as retransmits / sent packets
+                    retrans  = int(m.group('retransmits') or 0)
+                    # sent packets = bytes / 1460 (TCP Max Segment Size)
+                    sent_pk  = int(m.group('bytes')) / 1460.0
+                    loss     = 100.0 * retrans/sent_pk if sent_pk>0 else 0.0
+                break
         else:
-            print(f'No {ftype} bursts')
+            # fallback to human-readable summary
+            for line in reversed(lines):
+                if 'Mbits/sec' in line:
+                    parts = line.split()
+                    rate = float(parts[-2])
+                    break
 
-    # per-host
-    host_rates = list(host_totals.values())
-    if host_rates:
-        tot_h = sum(host_rates)
-        avg_h = tot_h / len(host_rates)
-        j_h   = (tot_h**2) / (len(host_rates)*sum(r*r for r in host_rates))
-        print(f'Host-level avg_throughput = {avg_h:.2f} Mbit/s')
-        print(f'Host-level fairness_index = {j_h:.3f}')
-    else:
-        print('No host data')
+        t_end_actual = min(cutoff, t0 + dur)
+        actual_dur   = max(0.0, t_end_actual - t0)
+        rel_t0       = t0 - start
+
+        print(f"t0={rel_t0:6.2f}s ; TYPE={ftype:<5} ; "
+              f"{rate:8.3f} ; {jitter:8.2f} ; {loss:7.2f} ; "
+              f"{dur:5.2f} ; {actual_dur:5.2f}")
+
+        class_rates[ftype].append(rate)
+        host_rates[src].append(rate)
+        class_data_mbit[ftype] += rate * actual_dur
+        host_data_mbit[src]    += rate * actual_dur
+
+    # 3) summary
+    print("\n=== SUMMARY ===")
+    total_data_mbit = sum(class_data_mbit.values())
+    avg_tp = total_data_mbit / total_time
+    print(f"Overall avg throughput = {avg_tp:.2f} Mbit/s")
+    print(f"Total data = {total_data_mbit:.2f} Mbit (~{total_data_mbit/8:.2f} MByte)\n")
+
+    all_rates = [r for rates in host_rates.values() for r in rates]
+    if all_rates:
+        print(f"Overall fairness_index = {jain(all_rates):.3f}")
+    for t in types:
+        if class_rates[t]:
+            print(f"{t.capitalize():<5} fairness_index = {jain(class_rates[t]):.5f}")
+    print()
+
+    # 4) per-host
+    print("=== HOST-LEVEL THROUGHPUT & FAIRNESS ===")
+    for h in sorted(host_data_mbit.keys(), key=lambda x: int(x.lstrip('h'))):
+        th = host_data_mbit[h] / total_time
+        fi = jain(host_rates[h])
+        print(f"{h:4} throughput = {th:5.2f} Mbit/s, host fairness_index = {fi:.5f}")
