@@ -21,7 +21,7 @@ from traffic_tests.run_traffic_mix_voip_video_bulk_bursty import run_traffic_mix
 NUM_HOSTS   = 16
 HOSTS_PER_SWITCH = NUM_HOSTS // 2
 BW          = 100    # Mbps for host–edge & edge–agg links
-CORE_BW     = 200    # Mbps for core–agg links (only for ThreeTierTopo)
+CORE_BW     = 100    # Mbps for core–agg links
 DELAY       = '1ms'
 DURATION    = 60     # seconds for each iperf test
 
@@ -29,7 +29,13 @@ def run_on_topology(name, topo):
     """
     Bring up Mininet with the given topology, run all tests, then tear down.
     """
-    print(f"\n=== EXPERIMENTS ON {name} ===")
+    print(f"\n=== EXPERIMENTS ON {name} ===\n")
+    print(f"Experiment parameters:\n"
+          f"  - Number of hosts: {NUM_HOSTS}\n"
+          f"  - Host bandwidth: {BW} Mbps\n"
+          f"  - Core bandwidth: {CORE_BW} Mbps\n"
+          f"  - Delay: {DELAY}\n"
+          f"  - Duration: {DURATION} seconds\n")
 
     net = Mininet(
     topo=topo,
@@ -88,6 +94,8 @@ if __name__ == '__main__':
         inter_bw=CORE_BW,
         delay=DELAY
     )
+    # Run each experiment independently to avoid issues with Ryu controller
+    
     run_on_topology('ExtendedStarTopo', extended_star_topo)
 
     # 2) Three-tier topology
@@ -97,4 +105,4 @@ if __name__ == '__main__':
         core_bw=CORE_BW,
         delay=DELAY
     )
-    run_on_topology('ThreeTierTopo', three_topo)
+    #run_on_topology('ThreeTierTopo', three_topo)

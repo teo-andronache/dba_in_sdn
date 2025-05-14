@@ -25,9 +25,14 @@ def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
       - dur_range (s) - range of burst durations
       - VoIP: UDP @100kbps, Video: UDP @5Mbps, Bulk: TCP
     At the end we wait on all of them, clip overruns to total_time,
-    parse CSV output, and compute per-burst + aggregate stats.
+    parse CSV output, and compute per-burst + aggregate stats,
+    plus overall average jitter & loss.
     """
-    # one regex for both UDP and TCP CSV
+    print('*** TEST: Bursty traffic mix VoIP/Video/Bulk***')
+    print(f'Function parameters:')
+    print(f"  - Average interval between bursts: avg_interval = {avg_interval:.2f}s")
+    print(f"  - Range of duration for bursts: dur_range = {dur_range[0]:.2f} - {dur_range[1]:.2f}s")
+
     csv_re = re.compile(r'''
         (?P<ts>[^,]+),              # timestamp
         (?P<src>[^,]+),(?P<sport>\d+),(?P<dst>[^,]+),(?P<dport>\d+),\d,
@@ -42,6 +47,9 @@ def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
     class_data_mbit = {t: 0.0 for t in types}
     host_rates      = defaultdict(list)
     host_data_mbit  = defaultdict(float)
+
+    all_jitters = []
+    all_losses  = []
 
     procs = []
     start = time.time()
@@ -66,11 +74,9 @@ def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
             srv_flag = '-s -i 1 -y C'
             cli_flag = ''
 
-        # start server
         net.get(dst).popen(f'iperf {srv_flag} -p {port}')
-        # start client
         cmd = f'iperf {cli_flag} -c {net.get(dst).IP()} -p {port} -t {dur:.2f} -y C'
-        print(f"*** Burst {idx}: t0={t0-start:6.2f}s  {src}->{dst} [{ftype}] dur={dur:.2f}s port={port}")
+        print(f"- Burst {idx}: t0={t0-start:6.2f}s  {src}->{dst} [{ftype}] dur={dur:.2f}s")
         proc = net.get(src).popen(cmd)
 
         procs.append((src, ftype, proc, dur, t0))
@@ -81,7 +87,6 @@ def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
 
     # 2) collect & parse
     print("\n--- Burst Results ---")
-    print("t0        ; TYPE       ; rate(Mbit/s); jitter(ms); loss(%); dur(s); actual_dur(s)")
     print("-"*70)
 
     for src, ftype, proc, dur, t0 in procs:
@@ -89,9 +94,7 @@ def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
         lines = out.decode(errors='ignore').splitlines()
         rate = jitter = loss = 0.0
 
-        # look for CSV output
         for line in reversed(lines):
-            # CSV lines from iperf start with a timestamp (e.g. "2025...")
             if line.startswith('2025'):
                 m = csv_re.match(line)
                 if not m:
@@ -104,27 +107,28 @@ def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
                     total_pk = int(m.group('total')  or 0)
                     loss     = 100.0 * lost/total_pk if total_pk>0 else 0.0
                 else:
-                    # TCP: estimate loss as retransmits / sent packets
                     retrans  = int(m.group('retransmits') or 0)
-                    # sent packets = bytes / 1460 (TCP Max Segment Size)
                     sent_pk  = int(m.group('bytes')) / 1460.0
                     loss     = 100.0 * retrans/sent_pk if sent_pk>0 else 0.0
                 break
         else:
-            # fallback to human-readable summary
             for line in reversed(lines):
                 if 'Mbits/sec' in line:
                     parts = line.split()
                     rate = float(parts[-2])
                     break
 
+        # record for overall average
+        all_jitters.append(jitter)
+        all_losses .append(loss)
+
         t_end_actual = min(cutoff, t0 + dur)
         actual_dur   = max(0.0, t_end_actual - t0)
         rel_t0       = t0 - start
 
         print(f"t0={rel_t0:6.2f}s ; TYPE={ftype:<5} ; "
-              f"{rate:8.3f} ; {jitter:8.2f} ; {loss:7.2f} ; "
-              f"{dur:5.2f} ; {actual_dur:5.2f}")
+              f"rate= {rate:8.3f}Mbps ; jitter={jitter:6.2f}ms ; "
+              f"loss={loss:6.2f}% ; dur={dur:5.2f}s ; actual={actual_dur:5.2f}s")
 
         class_rates[ftype].append(rate)
         host_rates[src].append(rate)
@@ -137,6 +141,12 @@ def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
     avg_tp = total_data_mbit / total_time
     print(f"Overall avg throughput = {avg_tp:.2f} Mbit/s")
     print(f"Total data = {total_data_mbit:.2f} Mbit (~{total_data_mbit/8:.2f} MByte)\n")
+
+    # print overall average jitter & loss
+    if all_jitters:
+        print(f"Average jitter across all bursts = {sum(all_jitters)/len(all_jitters):.2f} ms")
+    if all_losses:
+        print(f"Average packet loss across all bursts = {sum(all_losses)/len(all_losses):.2f} %\n")
 
     all_rates = [r for rates in host_rates.values() for r in rates]
     if all_rates:

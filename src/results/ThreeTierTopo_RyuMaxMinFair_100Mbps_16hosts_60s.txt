@@ -1,0 +1,375 @@
+=== EXPERIMENTS ON ThreeTierTopo ===
+
+Experiment parameters:
+  - Number of hosts: 16
+  - Host bandwidth: 100 Mbps
+  - Core bandwidth: 100 Mbps
+  - Delay: 1ms
+  - Duration: 60 seconds
+
+*** Ping: testing ping reachability
+h1 -> h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 
+h2 -> h1 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 
+h3 -> h1 h2 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 
+h4 -> h1 h2 h3 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 
+h5 -> h1 h2 h3 h4 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 
+h6 -> h1 h2 h3 h4 h5 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 
+h7 -> h1 h2 h3 h4 h5 h6 h8 h9 h10 h11 h12 h13 h14 h15 h16 
+h8 -> h1 h2 h3 h4 h5 h6 h7 h9 h10 h11 h12 h13 h14 h15 h16 
+h9 -> h1 h2 h3 h4 h5 h6 h7 h8 h10 h11 h12 h13 h14 h15 h16 
+h10 -> h1 h2 h3 h4 h5 h6 h7 h8 h9 h11 h12 h13 h14 h15 h16 
+h11 -> h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h12 h13 h14 h15 h16 
+h12 -> h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h13 h14 h15 h16 
+h13 -> h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h14 h15 h16 
+h14 -> h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h15 h16 
+h15 -> h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h16 
+h16 -> h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 
+*** Results: 0% dropped (240/240 received)
+~~~ Ping test completed. ~~~
+
+*** TEST: Stress test iperf TCP ***
+h1->h9 throughput=17.20 Mbit/s
+h2->h10 throughput=9.11 Mbit/s
+h3->h11 throughput=14.20 Mbit/s
+h4->h12 throughput=14.90 Mbit/s
+h5->h13 throughput=9.37 Mbit/s
+h6->h14 throughput=9.59 Mbit/s
+h7->h15 throughput=12.40 Mbit/s
+h8->h16 throughput=10.60 Mbit/s
+avg_throughput=12.17 Mbit/s
+total_throughput=97.37 Mbit/s
+fairness_index=0.949
+~~~ Stress test iperf TCP completed. ~~~
+
+*** TEST: Triple-mix VoIP/Video/Bulk ***
+h1->h16 [voip] = 0.100 Mbit/s
+h1->h16 [video] = 5.000 Mbit/s
+h1->h16 [bulk] = 7.680 Mbit/s
+h2->h16 [voip] = 0.100 Mbit/s
+h2->h16 [video] = 5.000 Mbit/s
+h2->h16 [bulk] = 8.860 Mbit/s
+h3->h16 [voip] = 0.100 Mbit/s
+h3->h16 [video] = 5.000 Mbit/s
+h3->h16 [bulk] = 7.610 Mbit/s
+h4->h16 [voip] = 0.100 Mbit/s
+h4->h16 [video] = 5.000 Mbit/s
+h4->h16 [bulk] = 5.880 Mbit/s
+h5->h16 [voip] = 0.100 Mbit/s
+h5->h16 [video] = 5.000 Mbit/s
+h5->h16 [bulk] = 6.100 Mbit/s
+h6->h16 [voip] = 0.100 Mbit/s
+h6->h16 [video] = 5.000 Mbit/s
+h6->h16 [bulk] = 7.640 Mbit/s
+h7->h16 [voip] = 0.100 Mbit/s
+h7->h16 [video] = 5.000 Mbit/s
+h7->h16 [bulk] = 6.130 Mbit/s
+h8->h16 [voip] = 0.100 Mbit/s
+h8->h16 [video] = 5.000 Mbit/s
+h8->h16 [bulk] = 6.520 Mbit/s
+=== SUMMARY ===
+Overall total_throughput   = 97.22 Mbit/s
+Overall fairness_index     = 0.650
+Voip fairness_index = 1.000
+Video fairness_index = 1.000
+Bulk fairness_index = 0.981
+Host-level avg_throughput = 12.15 Mbit/s
+Host-level fairness_index = 0.993
+~~~ Triple-mix VoIP/Video/Bulk test completed. ~~~
+
+*** TEST: Bursty traffic mix VoIP/Video/Bulk***
+Function parameters:
+- Average interval between bursts: avg_interval = 0.50s
+- Range of duration for bursts: dur_range = 1.00 - 60.00s
+- Burst 0: t0=  0.00s  h4->h12 [bulk] dur=34.01s
+- Burst 1: t0=  1.15s  h7->h15 [voip] dur=25.54s
+- Burst 2: t0=  1.88s  h7->h15 [video] dur=54.66s
+- Burst 3: t0=  2.63s  h1->h9 [video] dur=9.11s
+- Burst 4: t0=  2.85s  h1->h9 [voip] dur=48.75s
+- Burst 5: t0=  3.34s  h8->h16 [voip] dur=57.82s
+- Burst 6: t0=  3.63s  h8->h16 [voip] dur=17.30s
+- Burst 7: t0=  4.06s  h4->h12 [bulk] dur=1.20s
+- Burst 8: t0=  4.30s  h3->h11 [voip] dur=24.46s
+- Burst 9: t0=  4.46s  h8->h16 [video] dur=36.90s
+- Burst 10: t0=  4.97s  h8->h16 [voip] dur=39.07s
+- Burst 11: t0=  5.13s  h3->h11 [bulk] dur=2.89s
+- Burst 12: t0=  5.39s  h1->h9 [voip] dur=29.48s
+- Burst 13: t0=  6.03s  h5->h13 [bulk] dur=22.19s
+- Burst 14: t0=  7.00s  h7->h15 [video] dur=33.35s
+- Burst 15: t0=  8.28s  h6->h14 [video] dur=36.85s
+- Burst 16: t0=  9.47s  h6->h14 [voip] dur=26.41s
+- Burst 17: t0=  9.59s  h6->h14 [video] dur=12.91s
+- Burst 18: t0= 10.07s  h8->h16 [voip] dur=40.74s
+- Burst 19: t0= 10.51s  h8->h16 [voip] dur=59.83s
+- Burst 20: t0= 10.62s  h7->h15 [bulk] dur=38.70s
+- Burst 21: t0= 11.10s  h6->h14 [bulk] dur=2.80s
+- Burst 22: t0= 11.11s  h4->h12 [voip] dur=49.18s
+- Burst 23: t0= 12.42s  h6->h14 [voip] dur=22.63s
+- Burst 24: t0= 12.44s  h4->h12 [bulk] dur=17.16s
+- Burst 25: t0= 12.52s  h3->h11 [voip] dur=20.70s
+- Burst 26: t0= 12.75s  h6->h14 [voip] dur=25.13s
+- Burst 27: t0= 12.83s  h5->h13 [voip] dur=25.20s
+- Burst 28: t0= 13.29s  h3->h11 [voip] dur=15.20s
+- Burst 29: t0= 13.46s  h6->h14 [voip] dur=55.44s
+- Burst 30: t0= 13.48s  h8->h16 [video] dur=13.06s
+- Burst 31: t0= 13.63s  h1->h9 [bulk] dur=33.15s
+- Burst 32: t0= 14.14s  h4->h12 [bulk] dur=56.37s
+- Burst 33: t0= 15.76s  h4->h12 [bulk] dur=37.80s
+- Burst 34: t0= 17.10s  h3->h11 [video] dur=44.60s
+- Burst 35: t0= 17.14s  h8->h16 [voip] dur=44.96s
+- Burst 36: t0= 17.24s  h3->h11 [bulk] dur=17.87s
+- Burst 37: t0= 17.70s  h8->h16 [bulk] dur=51.56s
+- Burst 38: t0= 17.85s  h1->h9 [bulk] dur=48.68s
+- Burst 39: t0= 18.32s  h3->h11 [voip] dur=38.30s
+- Burst 40: t0= 19.74s  h6->h14 [voip] dur=13.31s
+- Burst 41: t0= 19.75s  h4->h12 [bulk] dur=44.40s
+- Burst 42: t0= 20.03s  h4->h12 [bulk] dur=32.09s
+- Burst 43: t0= 20.40s  h5->h13 [video] dur=26.20s
+- Burst 44: t0= 20.57s  h6->h14 [voip] dur=20.33s
+- Burst 45: t0= 20.98s  h6->h14 [video] dur=55.54s
+- Burst 46: t0= 21.29s  h5->h13 [video] dur=34.27s
+- Burst 47: t0= 22.03s  h7->h15 [bulk] dur=43.47s
+- Burst 48: t0= 22.21s  h5->h13 [voip] dur=14.24s
+- Burst 49: t0= 22.55s  h5->h13 [bulk] dur=44.12s
+- Burst 50: t0= 22.76s  h8->h16 [video] dur=37.58s
+- Burst 51: t0= 22.77s  h7->h15 [video] dur=3.07s
+- Burst 52: t0= 22.96s  h4->h12 [video] dur=7.77s
+- Burst 53: t0= 23.06s  h1->h9 [video] dur=46.36s
+- Burst 54: t0= 23.27s  h1->h9 [bulk] dur=6.39s
+- Burst 55: t0= 23.85s  h5->h13 [voip] dur=23.50s
+- Burst 56: t0= 24.28s  h3->h11 [video] dur=44.62s
+- Burst 57: t0= 25.58s  h8->h16 [bulk] dur=19.56s
+- Burst 58: t0= 25.61s  h6->h14 [bulk] dur=41.30s
+- Burst 59: t0= 26.12s  h1->h9 [voip] dur=33.42s
+- Burst 60: t0= 26.95s  h1->h9 [voip] dur=51.86s
+- Burst 61: t0= 27.14s  h3->h11 [bulk] dur=26.12s
+- Burst 62: t0= 28.38s  h7->h15 [bulk] dur=12.88s
+- Burst 63: t0= 28.91s  h4->h12 [bulk] dur=52.57s
+- Burst 64: t0= 28.96s  h2->h10 [video] dur=59.29s
+- Burst 65: t0= 29.07s  h4->h12 [voip] dur=13.44s
+- Burst 66: t0= 29.34s  h7->h15 [video] dur=8.41s
+- Burst 67: t0= 29.73s  h5->h13 [voip] dur=36.84s
+- Burst 68: t0= 29.80s  h7->h15 [voip] dur=17.29s
+- Burst 69: t0= 29.86s  h5->h13 [voip] dur=43.13s
+- Burst 70: t0= 30.39s  h2->h10 [voip] dur=24.14s
+- Burst 71: t0= 32.99s  h3->h11 [video] dur=54.57s
+- Burst 72: t0= 33.06s  h4->h12 [voip] dur=14.60s
+- Burst 73: t0= 33.81s  h6->h14 [video] dur=31.39s
+- Burst 74: t0= 33.85s  h7->h15 [video] dur=2.81s
+- Burst 75: t0= 34.14s  h6->h14 [voip] dur=51.32s
+- Burst 76: t0= 34.72s  h8->h16 [video] dur=18.65s
+- Burst 77: t0= 34.91s  h6->h14 [voip] dur=58.13s
+- Burst 78: t0= 35.40s  h3->h11 [voip] dur=44.28s
+- Burst 79: t0= 35.47s  h4->h12 [voip] dur=54.09s
+- Burst 80: t0= 36.38s  h2->h10 [voip] dur=38.68s
+- Burst 81: t0= 38.15s  h3->h11 [voip] dur=59.83s
+- Burst 82: t0= 38.28s  h8->h16 [voip] dur=5.97s
+- Burst 83: t0= 39.00s  h5->h13 [video] dur=39.19s
+- Burst 84: t0= 39.71s  h4->h12 [voip] dur=54.18s
+- Burst 85: t0= 40.62s  h4->h12 [video] dur=4.96s
+- Burst 86: t0= 41.02s  h6->h14 [video] dur=31.13s
+- Burst 87: t0= 41.60s  h7->h15 [voip] dur=16.83s
+- Burst 88: t0= 42.55s  h3->h11 [voip] dur=49.58s
+- Burst 89: t0= 43.56s  h4->h12 [bulk] dur=42.70s
+- Burst 90: t0= 43.69s  h4->h12 [bulk] dur=41.30s
+- Burst 91: t0= 44.13s  h4->h12 [video] dur=44.79s
+- Burst 92: t0= 44.32s  h1->h9 [voip] dur=29.83s
+- Burst 93: t0= 45.38s  h3->h11 [video] dur=55.80s
+- Burst 94: t0= 45.58s  h5->h13 [video] dur=15.86s
+- Burst 95: t0= 45.60s  h6->h14 [video] dur=57.82s
+- Burst 96: t0= 46.10s  h7->h15 [voip] dur=36.56s
+- Burst 97: t0= 46.22s  h8->h16 [bulk] dur=38.22s
+- Burst 98: t0= 46.53s  h1->h9 [video] dur=27.27s
+- Burst 99: t0= 46.60s  h1->h9 [bulk] dur=51.57s
+- Burst 100: t0= 46.70s  h8->h16 [voip] dur=14.67s
+- Burst 101: t0= 47.03s  h2->h10 [video] dur=53.76s
+- Burst 102: t0= 47.24s  h8->h16 [bulk] dur=48.95s
+- Burst 103: t0= 47.65s  h2->h10 [video] dur=52.57s
+- Burst 104: t0= 48.20s  h5->h13 [voip] dur=51.79s
+- Burst 105: t0= 48.26s  h1->h9 [bulk] dur=27.69s
+- Burst 106: t0= 48.36s  h3->h11 [voip] dur=41.66s
+- Burst 107: t0= 48.69s  h1->h9 [bulk] dur=43.36s
+- Burst 108: t0= 48.78s  h1->h9 [video] dur=25.98s
+- Burst 109: t0= 48.89s  h5->h13 [video] dur=38.16s
+- Burst 110: t0= 49.56s  h2->h10 [bulk] dur=53.20s
+- Burst 111: t0= 50.40s  h5->h13 [voip] dur=51.91s
+- Burst 112: t0= 50.65s  h6->h14 [voip] dur=1.55s
+- Burst 113: t0= 51.20s  h5->h13 [video] dur=58.61s
+- Burst 114: t0= 51.42s  h3->h11 [bulk] dur=14.67s
+- Burst 115: t0= 51.52s  h6->h14 [bulk] dur=45.06s
+- Burst 116: t0= 52.01s  h5->h13 [bulk] dur=13.61s
+- Burst 117: t0= 52.19s  h1->h9 [bulk] dur=40.30s
+- Burst 118: t0= 52.55s  h1->h9 [voip] dur=12.63s
+- Burst 119: t0= 53.45s  h7->h15 [voip] dur=14.73s
+- Burst 120: t0= 54.07s  h8->h16 [bulk] dur=43.71s
+- Burst 121: t0= 54.56s  h4->h12 [video] dur=38.78s
+- Burst 122: t0= 54.69s  h6->h14 [video] dur=55.59s
+- Burst 123: t0= 54.96s  h7->h15 [bulk] dur=8.50s
+- Burst 124: t0= 55.54s  h6->h14 [video] dur=45.44s
+- Burst 125: t0= 56.03s  h3->h11 [video] dur=1.58s
+- Burst 126: t0= 56.64s  h8->h16 [video] dur=53.84s
+- Burst 127: t0= 57.28s  h7->h15 [bulk] dur=48.72s
+- Burst 128: t0= 57.71s  h5->h13 [video] dur=13.18s
+- Burst 129: t0= 57.79s  h8->h16 [bulk] dur=52.31s
+- Burst 130: t0= 58.43s  h7->h15 [bulk] dur=38.86s
+- Burst 131: t0= 58.98s  h7->h15 [voip] dur=58.21s
+- Burst 132: t0= 59.79s  h4->h12 [bulk] dur=38.81s
+- Burst 133: t0= 59.90s  h4->h12 [voip] dur=33.72s
+
+--- Burst Results ---
+----------------------------------------------------------------------
+t0=  0.00s ; TYPE=bulk  ; rate=   17.326Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=34.01s ; actual=34.01s
+t0=  1.15s ; TYPE=voip  ; rate=    0.098Mbps ; jitter=  3.31ms ; loss=  1.38% ; dur=25.54s ; actual=25.54s
+t0=  1.88s ; TYPE=video ; rate=    4.729Mbps ; jitter=  0.73ms ; loss=  5.21% ; dur=54.66s ; actual=54.66s
+t0=  2.63s ; TYPE=video ; rate=    4.925Mbps ; jitter=  0.41ms ; loss=  0.18% ; dur= 9.11s ; actual= 9.11s
+t0=  2.85s ; TYPE=voip  ; rate=    0.099Mbps ; jitter=  1.75ms ; loss=  1.20% ; dur=48.75s ; actual=48.75s
+t0=  3.34s ; TYPE=voip  ; rate=    0.094Mbps ; jitter= 16.78ms ; loss=  6.09% ; dur=57.82s ; actual=56.66s
+t0=  3.63s ; TYPE=voip  ; rate=    0.097Mbps ; jitter=  5.20ms ; loss=  2.03% ; dur=17.30s ; actual=17.30s
+t0=  4.06s ; TYPE=bulk  ; rate=   28.857Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur= 1.20s ; actual= 1.20s
+t0=  4.30s ; TYPE=voip  ; rate=    0.098Mbps ; jitter=  3.34ms ; loss=  1.92% ; dur=24.46s ; actual=24.46s
+t0=  4.46s ; TYPE=video ; rate=    4.909Mbps ; jitter=  0.27ms ; loss=  1.64% ; dur=36.90s ; actual=36.90s
+t0=  4.97s ; TYPE=voip  ; rate=    0.098Mbps ; jitter=  1.45ms ; loss=  2.10% ; dur=39.07s ; actual=39.07s
+t0=  5.13s ; TYPE=bulk  ; rate=   23.580Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur= 2.89s ; actual= 2.89s
+t0=  5.39s ; TYPE=voip  ; rate=    0.096Mbps ; jitter=  2.20ms ; loss=  3.59% ; dur=29.48s ; actual=29.48s
+t0=  6.03s ; TYPE=bulk  ; rate=   10.868Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=22.19s ; actual=22.19s
+t0=  7.00s ; TYPE=video ; rate=    4.929Mbps ; jitter=  0.21ms ; loss=  1.38% ; dur=33.35s ; actual=33.35s
+t0=  8.28s ; TYPE=video ; rate=    4.883Mbps ; jitter=  0.21ms ; loss=  2.47% ; dur=36.85s ; actual=36.85s
+t0=  9.47s ; TYPE=voip  ; rate=    0.093Mbps ; jitter=  1.96ms ; loss=  7.56% ; dur=26.41s ; actual=26.41s
+t0=  9.59s ; TYPE=video ; rate=    4.899Mbps ; jitter=  0.36ms ; loss=  2.10% ; dur=12.91s ; actual=12.91s
+t0= 10.07s ; TYPE=voip  ; rate=    0.095Mbps ; jitter= 17.29ms ; loss=  4.60% ; dur=40.74s ; actual=40.74s
+t0= 10.51s ; TYPE=voip  ; rate=    0.096Mbps ; jitter= 63.33ms ; loss=  4.32% ; dur=59.83s ; actual=49.49s
+t0= 10.62s ; TYPE=bulk  ; rate=    4.063Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=38.70s ; actual=38.70s
+t0= 11.10s ; TYPE=bulk  ; rate=    5.811Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur= 2.80s ; actual= 2.80s
+t0= 11.11s ; TYPE=voip  ; rate=    0.085Mbps ; jitter=  1.65ms ; loss= 15.04% ; dur=49.18s ; actual=48.89s
+t0= 12.42s ; TYPE=voip  ; rate=    0.097Mbps ; jitter=  2.73ms ; loss=  3.63% ; dur=22.63s ; actual=22.63s
+t0= 12.44s ; TYPE=bulk  ; rate=    3.246Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=17.16s ; actual=17.16s
+t0= 12.52s ; TYPE=voip  ; rate=    0.096Mbps ; jitter= 64.35ms ; loss=  3.95% ; dur=20.70s ; actual=20.70s
+t0= 12.75s ; TYPE=voip  ; rate=    0.097Mbps ; jitter=  1.71ms ; loss=  2.80% ; dur=25.13s ; actual=25.13s
+t0= 12.83s ; TYPE=voip  ; rate=    0.099Mbps ; jitter=  1.86ms ; loss=  0.93% ; dur=25.20s ; actual=25.20s
+t0= 13.29s ; TYPE=voip  ; rate=    0.099Mbps ; jitter=  2.89ms ; loss=  1.54% ; dur=15.20s ; actual=15.20s
+t0= 13.46s ; TYPE=voip  ; rate=    0.088Mbps ; jitter=  0.69ms ; loss= 12.29% ; dur=55.44s ; actual=46.54s
+t0= 13.48s ; TYPE=video ; rate=    4.916Mbps ; jitter=  0.31ms ; loss=  2.03% ; dur=13.06s ; actual=13.06s
+t0= 13.63s ; TYPE=bulk  ; rate=    2.427Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=33.15s ; actual=33.15s
+t0= 14.14s ; TYPE=bulk  ; rate=    1.031Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=56.37s ; actual=45.86s
+t0= 15.76s ; TYPE=bulk  ; rate=    1.331Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=37.80s ; actual=37.80s
+t0= 17.10s ; TYPE=video ; rate=    4.847Mbps ; jitter=  0.83ms ; loss=  3.12% ; dur=44.60s ; actual=42.90s
+t0= 17.14s ; TYPE=voip  ; rate=    0.093Mbps ; jitter=  3.34ms ; loss=  7.05% ; dur=44.96s ; actual=42.86s
+t0= 17.24s ; TYPE=bulk  ; rate=    3.865Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=17.87s ; actual=17.87s
+t0= 17.70s ; TYPE=bulk  ; rate=    1.198Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=51.56s ; actual=42.30s
+t0= 17.85s ; TYPE=bulk  ; rate=    0.707Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=48.68s ; actual=42.15s
+t0= 18.32s ; TYPE=voip  ; rate=    0.093Mbps ; jitter=  1.19ms ; loss=  6.75% ; dur=38.30s ; actual=38.30s
+t0= 19.74s ; TYPE=voip  ; rate=    0.099Mbps ; jitter=  2.30ms ; loss=  0.88% ; dur=13.31s ; actual=13.31s
+t0= 19.75s ; TYPE=bulk  ; rate=    0.838Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=44.40s ; actual=40.25s
+t0= 20.03s ; TYPE=bulk  ; rate=    0.630Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=32.09s ; actual=32.09s
+t0= 20.40s ; TYPE=video ; rate=    4.925Mbps ; jitter=  0.21ms ; loss=  1.66% ; dur=26.20s ; actual=26.20s
+t0= 20.57s ; TYPE=voip  ; rate=    0.099Mbps ; jitter=  1.68ms ; loss=  1.73% ; dur=20.33s ; actual=20.33s
+t0= 20.98s ; TYPE=video ; rate=    4.307Mbps ; jitter=  0.32ms ; loss= 13.88% ; dur=55.54s ; actual=39.02s
+t0= 21.29s ; TYPE=video ; rate=    4.701Mbps ; jitter=  0.39ms ; loss=  6.11% ; dur=34.27s ; actual=34.27s
+t0= 22.03s ; TYPE=bulk  ; rate=    1.341Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=43.47s ; actual=37.97s
+t0= 22.21s ; TYPE=voip  ; rate=    0.096Mbps ; jitter=  1.72ms ; loss=  4.10% ; dur=14.24s ; actual=14.24s
+t0= 22.55s ; TYPE=bulk  ; rate=    0.597Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=44.12s ; actual=37.45s
+t0= 22.76s ; TYPE=video ; rate=    4.709Mbps ; jitter=  0.13ms ; loss=  5.90% ; dur=37.58s ; actual=37.24s
+t0= 22.77s ; TYPE=video ; rate=    4.813Mbps ; jitter=  0.19ms ; loss=  3.98% ; dur= 3.07s ; actual= 3.07s
+t0= 22.96s ; TYPE=video ; rate=    4.894Mbps ; jitter=  0.26ms ; loss=  2.39% ; dur= 7.77s ; actual= 7.77s
+t0= 23.06s ; TYPE=video ; rate=    4.315Mbps ; jitter=  0.24ms ; loss= 13.77% ; dur=46.36s ; actual=36.94s
+t0= 23.27s ; TYPE=bulk  ; rate=    1.310Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur= 6.39s ; actual= 6.39s
+t0= 23.85s ; TYPE=voip  ; rate=    0.098Mbps ; jitter= 64.16ms ; loss=  3.00% ; dur=23.50s ; actual=23.50s
+t0= 24.28s ; TYPE=video ; rate=    4.069Mbps ; jitter= 15.83ms ; loss= 18.20% ; dur=44.62s ; actual=35.72s
+t0= 25.58s ; TYPE=bulk  ; rate=    1.830Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=19.56s ; actual=19.56s
+t0= 25.61s ; TYPE=bulk  ; rate=    0.776Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=41.30s ; actual=34.39s
+t0= 26.12s ; TYPE=voip  ; rate=    0.086Mbps ; jitter=  1.53ms ; loss= 14.39% ; dur=33.42s ; actual=33.42s
+t0= 26.95s ; TYPE=voip  ; rate=    0.088Mbps ; jitter=  1.94ms ; loss= 11.79% ; dur=51.86s ; actual=33.05s
+t0= 27.14s ; TYPE=bulk  ; rate=    1.516Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=26.12s ; actual=26.12s
+t0= 28.38s ; TYPE=bulk  ; rate=    2.655Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=12.88s ; actual=12.88s
+t0= 28.91s ; TYPE=bulk  ; rate=    0.509Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=52.57s ; actual=31.09s
+t0= 28.96s ; TYPE=video ; rate=    4.782Mbps ; jitter= 62.73ms ; loss=  4.38% ; dur=59.29s ; actual=31.04s
+t0= 29.07s ; TYPE=voip  ; rate=    0.096Mbps ; jitter=  1.49ms ; loss=  4.35% ; dur=13.44s ; actual=13.44s
+t0= 29.34s ; TYPE=video ; rate=    4.917Mbps ; jitter=  0.19ms ; loss=  1.85% ; dur= 8.41s ; actual= 8.41s
+t0= 29.73s ; TYPE=voip  ; rate=    0.081Mbps ; jitter=  0.92ms ; loss= 18.79% ; dur=36.84s ; actual=30.27s
+t0= 29.80s ; TYPE=voip  ; rate=    0.094Mbps ; jitter=  1.88ms ; loss=  6.08% ; dur=17.29s ; actual=17.29s
+t0= 29.86s ; TYPE=voip  ; rate=    0.084Mbps ; jitter=  1.03ms ; loss= 16.35% ; dur=43.13s ; actual=30.14s
+t0= 30.39s ; TYPE=voip  ; rate=    0.096Mbps ; jitter=  1.43ms ; loss=  3.88% ; dur=24.14s ; actual=24.14s
+t0= 32.99s ; TYPE=video ; rate=    4.803Mbps ; jitter=  0.26ms ; loss=  3.96% ; dur=54.57s ; actual=27.01s
+t0= 33.06s ; TYPE=voip  ; rate=    0.098Mbps ; jitter=  1.33ms ; loss=  3.20% ; dur=14.60s ; actual=14.60s
+t0= 33.81s ; TYPE=video ; rate=    4.488Mbps ; jitter=  0.23ms ; loss= 10.29% ; dur=31.39s ; actual=26.19s
+t0= 33.85s ; TYPE=video ; rate=    4.775Mbps ; jitter=  0.27ms ; loss=  4.77% ; dur= 2.81s ; actual= 2.81s
+t0= 34.14s ; TYPE=voip  ; rate=    0.086Mbps ; jitter=  1.31ms ; loss= 13.50% ; dur=51.32s ; actual=25.86s
+t0= 34.72s ; TYPE=video ; rate=    4.663Mbps ; jitter= 15.75ms ; loss=  5.58% ; dur=18.65s ; actual=18.65s
+t0= 34.91s ; TYPE=voip  ; rate=    0.094Mbps ; jitter=  3.15ms ; loss=  6.06% ; dur=58.13s ; actual=25.09s
+t0= 35.40s ; TYPE=voip  ; rate=    0.090Mbps ; jitter=  1.53ms ; loss=  9.55% ; dur=44.28s ; actual=24.60s
+t0= 35.47s ; TYPE=voip  ; rate=    0.087Mbps ; jitter=  2.11ms ; loss= 12.61% ; dur=54.09s ; actual=24.53s
+t0= 36.38s ; TYPE=voip  ; rate=    0.078Mbps ; jitter=  1.39ms ; loss= 22.19% ; dur=38.68s ; actual=23.62s
+t0= 38.15s ; TYPE=voip  ; rate=    0.089Mbps ; jitter=  3.31ms ; loss= 11.00% ; dur=59.83s ; actual=21.85s
+t0= 38.28s ; TYPE=voip  ; rate=    0.100Mbps ; jitter= 63.41ms ; loss=  0.00% ; dur= 5.97s ; actual= 5.97s
+t0= 39.00s ; TYPE=video ; rate=    4.540Mbps ; jitter=  0.27ms ; loss=  9.19% ; dur=39.19s ; actual=21.00s
+t0= 39.71s ; TYPE=voip  ; rate=    0.093Mbps ; jitter=  3.58ms ; loss=  6.51% ; dur=54.18s ; actual=20.29s
+t0= 40.62s ; TYPE=video ; rate=    4.784Mbps ; jitter=  0.27ms ; loss=  4.08% ; dur= 4.96s ; actual= 4.96s
+t0= 41.02s ; TYPE=video ; rate=    4.409Mbps ; jitter=  0.17ms ; loss= 11.84% ; dur=31.13s ; actual=18.98s
+t0= 41.60s ; TYPE=voip  ; rate=    0.097Mbps ; jitter=  2.25ms ; loss=  3.47% ; dur=16.83s ; actual=16.83s
+t0= 42.55s ; TYPE=voip  ; rate=    0.087Mbps ; jitter=  3.93ms ; loss= 13.27% ; dur=49.58s ; actual=17.45s
+t0= 43.56s ; TYPE=bulk  ; rate=    0.539Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=42.70s ; actual=16.44s
+t0= 43.69s ; TYPE=bulk  ; rate=    0.350Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=41.30s ; actual=16.31s
+t0= 44.13s ; TYPE=video ; rate=    4.246Mbps ; jitter=  0.24ms ; loss= 15.06% ; dur=44.79s ; actual=15.87s
+t0= 44.32s ; TYPE=voip  ; rate=    0.082Mbps ; jitter=  1.07ms ; loss= 18.11% ; dur=29.83s ; actual=15.68s
+t0= 45.38s ; TYPE=video ; rate=    4.476Mbps ; jitter=  0.17ms ; loss= 10.61% ; dur=55.80s ; actual=14.62s
+t0= 45.58s ; TYPE=video ; rate=    4.786Mbps ; jitter=  0.15ms ; loss=  4.36% ; dur=15.86s ; actual=14.42s
+t0= 45.60s ; TYPE=video ; rate=    4.804Mbps ; jitter=  0.25ms ; loss=  4.09% ; dur=57.82s ; actual=14.40s
+t0= 46.10s ; TYPE=voip  ; rate=    0.075Mbps ; jitter=  1.75ms ; loss= 25.40% ; dur=36.56s ; actual=13.90s
+t0= 46.22s ; TYPE=bulk  ; rate=    0.456Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=38.22s ; actual=13.78s
+t0= 46.53s ; TYPE=video ; rate=    4.271Mbps ; jitter=  0.28ms ; loss= 14.58% ; dur=27.27s ; actual=13.47s
+t0= 46.60s ; TYPE=bulk  ; rate=    1.880Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=51.57s ; actual=13.40s
+t0= 46.70s ; TYPE=voip  ; rate=    0.090Mbps ; jitter=  0.85ms ; loss= 10.40% ; dur=14.67s ; actual=13.30s
+t0= 47.03s ; TYPE=video ; rate=    4.719Mbps ; jitter=  0.28ms ; loss=  5.76% ; dur=53.76s ; actual=12.97s
+t0= 47.24s ; TYPE=bulk  ; rate=    1.493Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=48.95s ; actual=12.76s
+t0= 47.65s ; TYPE=video ; rate=    4.446Mbps ; jitter=  0.29ms ; loss= 11.20% ; dur=52.57s ; actual=12.35s
+t0= 48.20s ; TYPE=voip  ; rate=    0.095Mbps ; jitter=  3.75ms ; loss=  5.67% ; dur=51.79s ; actual=11.80s
+t0= 48.26s ; TYPE=bulk  ; rate=    0.226Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=27.69s ; actual=11.74s
+t0= 48.36s ; TYPE=voip  ; rate=    0.087Mbps ; jitter=  2.69ms ; loss= 12.68% ; dur=41.66s ; actual=11.64s
+t0= 48.69s ; TYPE=bulk  ; rate=    0.819Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=43.36s ; actual=11.31s
+t0= 48.78s ; TYPE=video ; rate=    4.700Mbps ; jitter=  0.21ms ; loss=  5.98% ; dur=25.98s ; actual=11.22s
+t0= 48.89s ; TYPE=video ; rate=    3.730Mbps ; jitter=  0.21ms ; loss= 25.37% ; dur=38.16s ; actual=11.11s
+t0= 49.56s ; TYPE=bulk  ; rate=    4.093Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=53.20s ; actual=10.44s
+t0= 50.40s ; TYPE=voip  ; rate=    0.087Mbps ; jitter=  1.79ms ; loss= 13.12% ; dur=51.91s ; actual= 9.60s
+t0= 50.65s ; TYPE=voip  ; rate=    0.100Mbps ; jitter= 63.01ms ; loss=  0.00% ; dur= 1.55s ; actual= 1.55s
+t0= 51.20s ; TYPE=video ; rate=    4.576Mbps ; jitter=  0.24ms ; loss=  8.57% ; dur=58.61s ; actual= 8.80s
+t0= 51.42s ; TYPE=bulk  ; rate=    0.082Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=14.67s ; actual= 8.58s
+t0= 51.52s ; TYPE=bulk  ; rate=    1.561Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=45.06s ; actual= 8.48s
+t0= 52.01s ; TYPE=bulk  ; rate=    0.000Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=13.61s ; actual= 7.99s
+t0= 52.19s ; TYPE=bulk  ; rate=    1.092Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=40.30s ; actual= 7.81s
+t0= 52.55s ; TYPE=voip  ; rate=    0.084Mbps ; jitter= 63.13ms ; loss= 15.74% ; dur=12.63s ; actual= 7.45s
+t0= 53.45s ; TYPE=voip  ; rate=    0.090Mbps ; jitter= 63.04ms ; loss= 10.32% ; dur=14.73s ; actual= 6.55s
+t0= 54.07s ; TYPE=bulk  ; rate=    2.128Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=43.71s ; actual= 5.93s
+t0= 54.56s ; TYPE=video ; rate=    4.106Mbps ; jitter=  0.42ms ; loss= 17.79% ; dur=38.78s ; actual= 5.44s
+t0= 54.69s ; TYPE=video ; rate=    4.872Mbps ; jitter=  0.36ms ; loss=  2.64% ; dur=55.59s ; actual= 5.31s
+t0= 54.96s ; TYPE=bulk  ; rate=    0.253Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur= 8.50s ; actual= 5.04s
+t0= 55.54s ; TYPE=video ; rate=    4.235Mbps ; jitter=  0.14ms ; loss= 15.44% ; dur=45.44s ; actual= 4.46s
+t0= 56.03s ; TYPE=video ; rate=    4.165Mbps ; jitter=  0.40ms ; loss= 16.52% ; dur= 1.58s ; actual= 1.58s
+t0= 56.64s ; TYPE=video ; rate=    4.792Mbps ; jitter=  0.29ms ; loss=  4.25% ; dur=53.84s ; actual= 3.36s
+t0= 57.28s ; TYPE=bulk  ; rate=    8.268Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=48.72s ; actual= 2.72s
+t0= 57.71s ; TYPE=video ; rate=    4.073Mbps ; jitter=  0.12ms ; loss= 18.56% ; dur=13.18s ; actual= 2.29s
+t0= 57.79s ; TYPE=bulk  ; rate=   12.593Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=52.31s ; actual= 2.21s
+t0= 58.43s ; TYPE=bulk  ; rate=    1.076Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=38.86s ; actual= 1.57s
+t0= 58.98s ; TYPE=voip  ; rate=    0.099Mbps ; jitter=  0.41ms ; loss=  1.41% ; dur=58.21s ; actual= 1.02s
+t0= 59.79s ; TYPE=bulk  ; rate=    1.564Mbps ; jitter=  0.00ms ; loss=  0.00% ; dur=38.81s ; actual= 0.21s
+t0= 59.90s ; TYPE=voip  ; rate=    0.093Mbps ; jitter=  3.60ms ; loss=  6.62% ; dur=33.72s ; actual= 0.10s
+
+=== SUMMARY ===
+Overall avg throughput = 94.52 Mbit/s
+Total data = 5671.36 Mbit (~708.92 MByte)
+
+Average jitter across all bursts = 5.03 ms
+Average packet loss across all bursts = 5.34 %
+
+Overall fairness_index = 0.297
+Voip  fairness_index = 0.99569
+Video fairness_index = 0.99572
+Bulk  fairness_index = 0.26872
+
+=== HOST-LEVEL THROUGHPUT & FAIRNESS ===
+h1   throughput =  8.23 Mbit/s, host fairness_index = 0.44977
+h2   throughput =  5.19 Mbit/s, host fairness_index = 0.67700
+h3   throughput = 12.48 Mbit/s, host fairness_index = 0.23735
+h4   throughput = 17.07 Mbit/s, host fairness_index = 0.21624
+h5   throughput = 13.70 Mbit/s, host fairness_index = 0.42709
+h6   throughput = 13.36 Mbit/s, host fairness_index = 0.50735
+h7   throughput = 12.80 Mbit/s, host fairness_index = 0.49864
+h8   throughput = 11.69 Mbit/s, host fairness_index = 0.36417

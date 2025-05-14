@@ -71,7 +71,7 @@ def run_traffic_mix_voip_video_bulk(net, pairs,
             val = float(m.group(1))
             unit = m.group(2)
             rate = val/1000.0 if unit.startswith('K') else val
-        print(f'{src} [{ftype}] = {rate:.2f} Mbit/s')
+        print(f'{src}->{dst} [{ftype}] = {rate:.3f} Mbit/s')
         class_rates[ftype].append(rate)
         host_totals[src] += rate
 
@@ -80,14 +80,12 @@ def run_traffic_mix_voip_video_bulk(net, pairs,
         p.terminate()
 
     # 4) summary statistics
-    print('\n=== SUMMARY ===')
+    print('=== SUMMARY ===')
     # overall
     all_rates = [r for rates in class_rates.values() for r in rates]
     if all_rates:
         total = sum(all_rates)
-        avg = total/len(all_rates)
         j_all = (total**2)/(len(all_rates)*sum(r*r for r in all_rates))
-        print(f'Overall average_throughput = {avg:.2f} Mbit/s')
         print(f'Overall total_throughput   = {total:.2f} Mbit/s')
         print(f'Overall fairness_index     = {j_all:.3f}')
     else:
@@ -113,3 +111,5 @@ def run_traffic_mix_voip_video_bulk(net, pairs,
         print(f'Host-level fairness_index = {j_h:.3f}')
     else:
         print('No hosts data')
+
+    print("~~~ Triple-mix VoIP/Video/Bulk test completed. ~~~\n")

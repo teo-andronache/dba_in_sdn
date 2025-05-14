@@ -46,5 +46,6 @@ def run_stress_test_iperf_tcp(net, pairs, duration=10, base_port=5000):
         print(f'avg_throughput={sum(throughputs)/n:.2f} Mbit/s')
         print(f'total_throughput={sum(throughputs):.2f} Mbit/s')
         print(f'fairness_index={fairness_index:.3f}')
+        print("~~~ Stress test iperf TCP completed. ~~~\n")
     else:
         print('throughput: no data')
