@@ -1,6 +1,6 @@
 import re,time
 
-def run_stress_test_iperf_tcp(net, pairs, duration=10, base_port=5000):
+def run_stress_test_iperf_tcp(net, pairs, duration=10, base_port=7000):
     """
     For each (src, dst) in `pairs`, launch the following flows:
       - Bulk   (TCP)
@@ -14,7 +14,7 @@ def run_stress_test_iperf_tcp(net, pairs, duration=10, base_port=5000):
       net        : Mininet instance
       pairs      : list of (srcHostName, dstHostName) tuples
       duration   : test duration for each flow (sec)
-      base_port  : starting UDP/TCP port; each flow uses base_port + idx
+      base_port  : starting TCP port; each flow uses base_port + idx
     """    
     print('*** TEST: Stress test iperf TCP ***')
     servers = []

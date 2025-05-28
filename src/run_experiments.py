@@ -2,7 +2,7 @@
 
 import os
 import sys
-import time
+import subprocess
 
 # Ensure `src/` is on the import path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
@@ -16,6 +16,8 @@ from traffic_tests.run_ping import run_ping
 from traffic_tests.run_stress_test_iperf_tcp import run_stress_test_iperf_tcp
 from traffic_tests.run_traffic_mix_voip_video_bulk import run_traffic_mix_voip_video_bulk
 from traffic_tests.run_traffic_mix_voip_video_bulk_bursty import run_traffic_mix_voip_video_bulk_bursty
+from traffic_tests.run_video_overload import run_video_overload
+from traffic_tests.run_traffic_mix_voip_2video_bulk import run_traffic_mix_voip_2video_bulk 
 
 # Experiment parameters
 NUM_HOSTS   = 16
@@ -23,7 +25,7 @@ HOSTS_PER_SWITCH = NUM_HOSTS // 2
 BW          = 100    # Mbps for host–edge & edge–agg links
 CORE_BW     = 100    # Mbps for core–agg links
 DELAY       = '1ms'
-DURATION    = 60     # seconds for each iperf test
+DURATION    = 30     # seconds for each iperf test
 
 def run_on_topology(name, topo):
     """
@@ -61,16 +63,15 @@ def run_on_topology(name, topo):
         net,
         pairs,
         duration=DURATION,
-        base_port=5000
+        base_port=7000
     )
 
     # 3) Triple-mix VoIP/Video/Bulk for first half hosts
-    #    (h1-h8) -> (h9-h16)
+    #   (h1-h8) -> (h9-h16)
     run_traffic_mix_voip_video_bulk(
         net,
         pairs,
-        duration=DURATION,
-        base_port=6000
+        duration=DURATION
     )
 
     # 4) Bursty random traffic, VoIP/Video/Bulk
@@ -78,9 +79,22 @@ def run_on_topology(name, topo):
         net,
         pairs,
         total_time=DURATION,
-        avg_interval=0.5,
-        dur_range=(1, 60),
-        base_port=7000
+        avg_interval=5,
+        dur_range=(5, 30)
+    )
+
+    # 5) VoIP/Video test
+    run_video_overload(
+        net,
+        pairs,
+        duration=DURATION
+    )
+
+    # 6) VoIP + 2 Video + Bulk per source
+    run_traffic_mix_voip_2video_bulk(
+        net,
+        pairs,
+        duration=DURATION
     )
 
     net.stop()

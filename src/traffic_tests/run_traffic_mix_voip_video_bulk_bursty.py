@@ -16,8 +16,7 @@ def jain(xs):
 def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
                                            total_time=60.0,
                                            avg_interval=0.5,
-                                           dur_range=(1,10),
-                                           base_port=7000):
+                                           dur_range=(1,10)):
     """
     Fire bursts of three traffic types (VoIP, Video, Bulk):
       - total_time (s) - duration of the test
@@ -55,6 +54,9 @@ def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
     start = time.time()
     idx = 0
 
+    voip_port  = 5000
+    video_port = 6000
+    bulk_port  = 7000
     # 1) launch clients & servers
     while True:
         now = time.time()
@@ -64,8 +66,24 @@ def run_traffic_mix_voip_video_bulk_bursty(net, pairs,
         src, dst = random.choice(pairs)
         ftype    = random.choice(types)
         dur      = random.uniform(*dur_range)
-        port     = base_port + idx
         t0       = now
+
+        # Sequentially assign port numbers
+        if ftype == 'voip':
+            port = voip_port
+            voip_port += 1
+            if voip_port > 5999:  # wrap around if exceeding
+                voip_port = 5000
+        elif ftype == 'video':
+            port = video_port
+            video_port += 1
+            if video_port > 6999:
+                video_port = 6000
+        else:  # bulk
+            port = bulk_port
+            bulk_port += 1
+            if bulk_port > 7999:
+                bulk_port = 7000
 
         if ftype in ('voip','video'):
             srv_flag = '-u -s -i 1 -y C'

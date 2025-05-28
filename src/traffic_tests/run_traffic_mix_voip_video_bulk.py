@@ -4,8 +4,7 @@ import re
 import time
 
 def run_traffic_mix_voip_video_bulk(net, pairs,
-                         duration=10,
-                         base_port=6000):
+                         duration=10):
     """
     For each (src, dst) in `pairs`, launch three concurrent flows:
       - VoIP   (UDP @ 100k)
@@ -15,39 +14,72 @@ def run_traffic_mix_voip_video_bulk(net, pairs,
       - overall average & total throughput
       - Jain fairness per class
       - Jain fairness per host
-
-    Args:
-      net        : Mininet instance
-      pairs      : list of (srcHostName, dstHostName) tuples
-      duration   : test duration for each flow (sec)
-      base_port  : starting UDP/TCP port; each flow uses base_port + idx
     """
     types = ['voip', 'video', 'bulk']
     # build flat list of flows
     flows = [(src, dst, ftype) for src, dst in pairs for ftype in types]
 
     print('*** TEST: Triple-mix VoIP/Video/Bulk ***')
+    voip_port  = 5000
+    video_port = 6000
+    bulk_port  = 7000
+
+    # regex to match Kbits/sec or Mbits/sec
+    pat = re.compile(r'([\d\.]+)\s+([KM]bits/sec)')
+
+    # data containers for summary
+    class_rates = {t: [] for t in types}
+    host_totals = {src: 0.0 for src, _ in pairs}
+
     # 1) start servers
     servers = []
-    for idx, (_, dst, ftype) in enumerate(flows, start=1):
-        port = base_port + idx
+    for _, dst, ftype in flows:
+        if ftype == 'voip':
+            port = voip_port
+            voip_port += 1
+            if voip_port > 5999:
+                voip_port = 5000
+        elif ftype == 'video':
+            port = video_port
+            video_port += 1
+            if video_port > 6999:
+                video_port = 6000
+        else:  # bulk
+            port = bulk_port
+            bulk_port += 1
+            if bulk_port > 7999:
+                bulk_port = 7000
+
         srv = net.get(dst)
         flag = '-u -s' if ftype in ('voip', 'video') else '-s'
-        # print(f'  [S] {dst} {ftype} server @ port {port}')
         servers.append(srv.popen(f'iperf {flag} -p {port}'))
 
     time.sleep(1)
 
-    # regex to match Kbits/sec or Mbits/sec
-    pat = re.compile(r'([\d\.]+)\s+([KM]bits/sec)')
-    # prepare data containers
-    class_rates = {t: [] for t in types}
-    host_totals = {src: 0.0 for src, _ in pairs}
-
     # 2) start clients
     clients = []
-    for idx, (src, dst, ftype) in enumerate(flows, start=1):
-        port = base_port + idx
+    # reset port counters
+    voip_port  = 5000
+    video_port = 6000
+    bulk_port  = 7000
+
+    for src, dst, ftype in flows:
+        if ftype == 'voip':
+            port = voip_port
+            voip_port += 1
+            if voip_port > 5999:
+                voip_port = 5000
+        elif ftype == 'video':
+            port = video_port
+            video_port += 1
+            if video_port > 6999:
+                video_port = 6000
+        else:  # bulk
+            port = bulk_port
+            bulk_port += 1
+            if bulk_port > 7999:
+                bulk_port = 7000
+
         cli = net.get(src)
         dst_h = net.get(dst)
         if ftype == 'voip':
@@ -56,13 +88,12 @@ def run_traffic_mix_voip_video_bulk(net, pairs,
             args = '-u -b 5m'
         else:
             args = ''
-        # print(f'  [C] {src}->{dst} {ftype} @ port {port}')
-        clients.append((src, ftype, cli.popen(
+        clients.append((src, dst, ftype, cli.popen(
             f'iperf {args} -c {dst_h.IP()} -p {port} -t {duration}'
         )))
 
     # 3) collect results
-    for src, ftype, p in clients:
+    for src, dst, ftype, p in clients:
         out, _ = p.communicate()
         text = out.decode(errors='ignore')
         m = pat.search(text)
