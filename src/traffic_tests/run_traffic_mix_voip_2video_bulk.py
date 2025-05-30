@@ -2,9 +2,9 @@
 """
 traffic_tests/run_traffic_mix_voip_2video_bulk.py
 
-1 × VoIP  (100 kbit/s UDP)
-2 × Video (5    Mbit/s UDP each)
-1 × Bulk  (TCP)                … per (src,dst) pair
+1 VoIP  (100 Kbps UDP)
+2 Video (5 Mbps UDP each)
+1 Bulk  (TCP) per (src,dst) pair
 """
 
 import re
