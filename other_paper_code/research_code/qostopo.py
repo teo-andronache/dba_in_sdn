@@ -14,8 +14,8 @@ import random
 class QosTopo(Topo):
 	def build(self):
 		#host and link parameters
-		dely = "1ms"	#link delay
-		bandwidth = 20	#link bandwidth in MBits
+		delay = "1ms"	#link delay
+		bandwidth = 100	#link bandwidth in MBits
 		cpu_f = 4 / 8		#number of cores / number of hosts
 
 		# h1------------|                                      |------------h5
@@ -59,9 +59,9 @@ class QosTopo(Topo):
 		self.addLink(h8, s4)
 
 		#connect switches
-		self.addLink(s1, s2, cls = TCLink, bw = bandwidth, delay = dely)
-		self.addLink(s2, s3, cls = TCLink, bw = bandwidth, delay = dely)
-		self.addLink(s3, s4, cls = TCLink, bw = bandwidth, delay = dely)
+		self.addLink(s1, s2, cls = TCLink, bw = bandwidth, delay = delay)
+		self.addLink(s2, s3, cls = TCLink, bw = bandwidth, delay = delay)
+		self.addLink(s3, s4, cls = TCLink, bw = bandwidth, delay = delay)
 	#end def
 #end class
 topos = {"qos": (lambda: QosTopo())}	#this line is needed if running using sudo mn
@@ -89,18 +89,20 @@ def main():
 	# bw = [8000, 6000, 4000, 2000]  # total = 20m
 	# bw = [7000, 5000, 3000, 1000]  # total = 16m
 	# bw = [9000, 7000, 3000, 1000]  # total = 20m
-	bw = [9000, 7000, 5000, 3000]  # total = 24m
+	# bw = [9000, 7000, 5000, 3000]  # total = 24m
 	# bw = [7000, 5000, 3000, 4000]  # total = 19m
+	bw = [50000, 30000, 20000, 15000]  # total = 115M
 
-	addMeter(dpid = 2, meter_id = 1, rate = 5000) #initial configured bandwidths
-	addMeter(dpid = 2, meter_id = 2, rate = 5000)
-	addMeter(dpid = 2, meter_id = 3, rate = 5000)
-	addMeter(dpid = 2, meter_id = 4, rate = 5000)
+	addMeter(dpid=2, meter_id=1, rate=43500)
+	addMeter(dpid=2, meter_id=2, rate=26100)
+	addMeter(dpid=2, meter_id=3, rate=17400)
+	addMeter(dpid=2, meter_id=4, rate=13000)
 
-	addMeter(dpid = 3, meter_id = 1, rate = 5000)
-	addMeter(dpid = 3, meter_id = 2, rate = 5000)
-	addMeter(dpid = 3, meter_id = 3, rate = 5000)
-	addMeter(dpid = 3, meter_id = 4, rate = 5000)
+	addMeter(dpid=3, meter_id=1, rate=43500)
+	addMeter(dpid=3, meter_id=2, rate=26100)
+	addMeter(dpid=3, meter_id=3, rate=17400)
+	addMeter(dpid=3, meter_id=4, rate=13000)
+
 
 	addFlow(dpid = 2, udp_dst = 5111, meter_id = 1)
 	addFlow(dpid = 3, udp_dst = 5111, meter_id = 1)
@@ -193,7 +195,7 @@ def main():
 
 def determineBandwidth(base, t):
 	variance = 0.2	#this variance is to map the initial bw to the math functions
-	t = t % 300
+	t = t % 60
 
 	y = base
 	xout = [0, 60]						#
@@ -224,7 +226,7 @@ def determineBandwidth(base, t):
 	#end if
 
 	#y = x^2
-	xout = [xout[1], 300]									#
+	xout = [xout[1], 60]									#
 	yout = [base - variance * base, base + variance * base]	#
 	if t >= xout[0] and t < xout[1]:
 		#print("x^2")

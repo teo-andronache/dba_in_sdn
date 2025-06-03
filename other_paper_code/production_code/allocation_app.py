@@ -355,8 +355,7 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 
 
 	def getMeterRates(self):
-		self.configured_meters[1] = 8000
-		self.configured_meters[2] = 6000
-		self.configured_meters[3] = 4000
-		self.configured_meters[4] = 2000
-	# end def
+		self.configured_meters[1] = 43500   # ≈ 50 000 × (100/115)
+		self.configured_meters[2] = 26100   # ≈ 30 000 × (100/115)
+		self.configured_meters[3] = 17400   # ≈ 20 000 × (100/115)
+		self.configured_meters[4] = 13000   # ≈ 15 000 × (100/115)
