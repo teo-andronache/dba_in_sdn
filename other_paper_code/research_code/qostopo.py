@@ -85,6 +85,10 @@ def main():
     # -------------------
     # Base “nominal” rates (kbps) for each of four flows
     bw = [35000, 25000, 15000, 5000]  # sum = 80 000 kbps
+    bw = [39375, 28125, 16875,  5625]  # sum =  90 000 kbps
+    bw = [43750, 31250, 18750,  6250]  # sum = 100 000 kbps
+    #bw = [48125, 34375, 20625,  6875]  # sum = 110 000 kbps
+    #bw = [52500, 37500, 22500,  7500]  # sum = 120 000 kbps
 
     # Install static meters on dpid=2 and dpid=3
     # (these are “initial” limits; your controller might overwrite later)
@@ -114,11 +118,11 @@ def main():
     time.sleep(0.5)
 
     # Launch iperf UDP servers on h5–h8 (one per port 5111..5114)
-    ti = "2"   # server‐side reporting interval
-    h5.cmd(f"iperf -s -u -p 5111 -i {ti} >> Results/{folder}/server_h5.txt &")
-    h6.cmd(f"iperf -s -u -p 5112 -i {ti} >> Results/{folder}/server_h6.txt &")
-    h7.cmd(f"iperf -s -u -p 5113 -i {ti} >> Results/{folder}/server_h7.txt &")
-    h8.cmd(f"iperf -s -u -p 5114 -i {ti} >> Results/{folder}/server_h8.txt &")
+    ti = "1"   # server‐side reporting interval
+    h5.cmd(f"iperf -s -u -p 5111 -i {ti} -y C >> Results/{folder}/server_h5.csv &")
+    h6.cmd(f"iperf -s -u -p 5112 -i {ti} -y C >> Results/{folder}/server_h6.csv &")
+    h7.cmd(f"iperf -s -u -p 5113 -i {ti} -y C >> Results/{folder}/server_h7.csv &")
+    h8.cmd(f"iperf -s -u -p 5114 -i {ti} -y C >> Results/{folder}/server_h8.csv &")
 
     # ------------------------------------
     # Main loop: every 10s, compute new rate
@@ -158,10 +162,10 @@ def main():
         b3 = f"{(y3/1000):.3f}m"
 
         # Launch four iperf clients (one per left‐side host), each for 10s
-        h1.cmd(f"iperf -u -c {h5.IP()} -p 5111 -b {b0} -i {interval} -t {burst_duration} >> Results/{folder}/client_h1.txt &")
-        h2.cmd(f"iperf -u -c {h6.IP()} -p 5112 -b {b1} -i {interval} -t {burst_duration} >> Results/{folder}/client_h2.txt &")
-        h3.cmd(f"iperf -u -c {h7.IP()} -p 5113 -b {b2} -i {interval} -t {burst_duration} >> Results/{folder}/client_h3.txt &")
-        h4.cmd(f"iperf -u -c {h8.IP()} -p 5114 -b {b3} -i {interval} -t {burst_duration} >> Results/{folder}/client_h4.txt &")
+        h1.cmd(f"iperf -u -c {h5.IP()} -p 5111 -b {b0} -i {burst_duration} -t {burst_duration} -y C >> Results/{folder}/client_h1.csv &")
+        h2.cmd(f"iperf -u -c {h6.IP()} -p 5112 -b {b1} -i {burst_duration} -t {burst_duration} -y C >> Results/{folder}/client_h2.csv &")
+        h3.cmd(f"iperf -u -c {h7.IP()} -p 5113 -b {b2} -i {burst_duration} -t {burst_duration} -y C >> Results/{folder}/client_h3.csv &")
+        h4.cmd(f"iperf -u -c {h8.IP()} -p 5114 -b {b3} -i {burst_duration} -t {burst_duration} -y C >> Results/{folder}/client_h4.csv &")
 
         # Sleep exactly 10s; by the time we wake up, each iperf client has completed its 10s run
         time.sleep(interval)
@@ -185,8 +189,8 @@ def main():
         addFlow(dpid=2, udp_dst=5114, meter_id=4)
         addFlow(dpid=3, udp_dst=5114, meter_id=4)
 
-        # Give the controller ~10 s to modify any meters if needed
-        time.sleep(10)
+        # Give the controller 5s to modify any meters if needed
+        time.sleep(5)
 
     # Finished
     net.stop()

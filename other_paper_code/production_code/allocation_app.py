@@ -106,10 +106,13 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 		new_rate = {}
 		matrix = {}
 		if ev.msg.datapath.id == self.switch_id:
+			self.logger.info(">>> Running meterAllocation at t=%.2f s", 
+					time.time() - self.start_time)
 			for ids in self.configured_meters:
 				[cur_rate[ids], matrix[ids]] = self.approximateTrafficRate(self.flow_time, self.rate_queue2[ids])
 			new_rate = self.meterAllocation(self.configured_meters, cur_rate)
 			self.modifyMeterRates(new_rate)
+			self.logger.info(">>> Pushed new meters: %r", new_rate)
 	# end def
 
 
