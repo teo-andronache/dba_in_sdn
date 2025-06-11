@@ -85,18 +85,17 @@ def main():
     # -------------------
     # Base “nominal” rates (kbps) for each of four flows
     bw = [35000, 25000, 15000, 5000]  # sum = 80 000 kbps
-    bw = [39375, 28125, 16875,  5625]  # sum =  90 000 kbps
-    bw = [43750, 31250, 18750,  6250]  # sum = 100 000 kbps
+    #bw = [39375, 28125, 16875,  5625]  # sum =  90 000 kbps
+    #bw = [43750, 31250, 18750,  6250]  # sum = 100 000 kbps
     #bw = [48125, 34375, 20625,  6875]  # sum = 110 000 kbps
     #bw = [52500, 37500, 22500,  7500]  # sum = 120 000 kbps
 
-    # Install static meters on dpid=2 and dpid=3
-    # (these are “initial” limits; your controller might overwrite later)
-    for dpid in (2, 3):
-        addMeter(dpid=dpid, meter_id=1, rate=43500)
-        addMeter(dpid=dpid, meter_id=2, rate=26100)
-        addMeter(dpid=dpid, meter_id=3, rate=17400)
-        addMeter(dpid=dpid, meter_id=4, rate=13000)
+    # Install initial static meters on dpid=2 and dpid=3
+    for dpid in (2,3):
+        addMeter(dpid=dpid, meter_id=1, rate=2*bw[0])  
+        addMeter(dpid=dpid, meter_id=2, rate=2*bw[1])  
+        addMeter(dpid=dpid, meter_id=3, rate=2*bw[2])  
+        addMeter(dpid=dpid, meter_id=4, rate=2*bw[3])  
 
     # Create one flow/meter pair per client (UDP dst ports 5111–5114)
     # on both switches (dpid=2,3)
@@ -127,7 +126,7 @@ def main():
     # ------------------------------------
     # Main loop: every 10s, compute new rate
     # ------------------------------------
-    duration = 60                     # total experiment length (seconds)
+    duration = 400                     # total experiment length (seconds)
     start_time = time.time()
     elapsed = 0.0
 
@@ -138,8 +137,7 @@ def main():
 
     while elapsed < duration:
         # How long each iperf client should run this round
-        burst_duration = "10"      # -t 10 seconds
-        interval = 10  # interval for iperf clients to run before changing rates; interval to sleep 
+        interval = 11  # interval for iperf clients to run before changing rates; interval to sleep 
 
         t = time.time() - start_time
 
@@ -149,11 +147,11 @@ def main():
         d2 = dynamic_demand(bw[2], t, phases[2])
         d3 = dynamic_demand(bw[3], t, phases[3])
 
-        # Add a small ±20% random jitter on top of the sine‐wave value
-        y0 = random.randint(int(d0 - 0.2*d0), int(d0 + 0.2*d0))
-        y1 = random.randint(int(d1 - 0.2*d1), int(d1 + 0.2*d1))
-        y2 = random.randint(int(d2 - 0.2*d2), int(d2 + 0.2*d2))
-        y3 = random.randint(int(d3 - 0.2*d3), int(d3 + 0.2*d3))
+        # Add a small ±10% random jitter on top of the sine‐wave value
+        y0 = random.randint(int(d0 - 0.1*d0), int(d0 + 0.1*d0))
+        y1 = random.randint(int(d1 - 0.1*d1), int(d1 + 0.1*d1))
+        y2 = random.randint(int(d2 - 0.1*d2), int(d2 + 0.1*d2))
+        y3 = random.randint(int(d3 - 0.1*d3), int(d3 + 0.1*d3))
 
         # Format for iperf UDP bandwidth argument
         b0 = f"{(y0/1000):.3f}m"
@@ -162,10 +160,10 @@ def main():
         b3 = f"{(y3/1000):.3f}m"
 
         # Launch four iperf clients (one per left‐side host), each for 10s
-        h1.cmd(f"iperf -u -c {h5.IP()} -p 5111 -b {b0} -i {burst_duration} -t {burst_duration} -y C >> Results/{folder}/client_h1.csv &")
-        h2.cmd(f"iperf -u -c {h6.IP()} -p 5112 -b {b1} -i {burst_duration} -t {burst_duration} -y C >> Results/{folder}/client_h2.csv &")
-        h3.cmd(f"iperf -u -c {h7.IP()} -p 5113 -b {b2} -i {burst_duration} -t {burst_duration} -y C >> Results/{folder}/client_h3.csv &")
-        h4.cmd(f"iperf -u -c {h8.IP()} -p 5114 -b {b3} -i {burst_duration} -t {burst_duration} -y C >> Results/{folder}/client_h4.csv &")
+        h1.cmd(f"iperf -u -c {h5.IP()} -p 5111 -b {b0} -i {interval} -t {interval} -y C >> Results/{folder}/client_h1.csv &")
+        h2.cmd(f"iperf -u -c {h6.IP()} -p 5112 -b {b1} -i {interval} -t {interval} -y C >> Results/{folder}/client_h2.csv &")
+        h3.cmd(f"iperf -u -c {h7.IP()} -p 5113 -b {b2} -i {interval} -t {interval} -y C >> Results/{folder}/client_h3.csv &")
+        h4.cmd(f"iperf -u -c {h8.IP()} -p 5114 -b {b3} -i {interval} -t {interval} -y C >> Results/{folder}/client_h4.csv &")
 
         # Sleep exactly 10s; by the time we wake up, each iperf client has completed its 10s run
         time.sleep(interval)
@@ -189,7 +187,7 @@ def main():
         addFlow(dpid=2, udp_dst=5114, meter_id=4)
         addFlow(dpid=3, udp_dst=5114, meter_id=4)
 
-        # Give the controller 5s to modify any meters if needed
+        # Give the controller 10s to modify any meters if needed
         time.sleep(5)
 
     # Finished

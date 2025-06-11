@@ -106,8 +106,8 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 		new_rate = {}
 		matrix = {}
 		if ev.msg.datapath.id == self.switch_id:
-			self.logger.info(">>> Running meterAllocation at t=%.2f s", 
-					time.time() - self.start_time)
+			cur_dur = ev.msg.body[0].duration_sec - self.start_time
+			self.logger.info(">>> Running meterAllocation at t=%.2f s", cur_dur)
 			for ids in self.configured_meters:
 				[cur_rate[ids], matrix[ids]] = self.approximateTrafficRate(self.flow_time, self.rate_queue2[ids])
 			new_rate = self.meterAllocation(self.configured_meters, cur_rate)
@@ -219,19 +219,24 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 	# end def
 
 
-	def modifyMeterRates(self, meter_rate):
-		datapath = [dp for dp in self.datapaths.values() if dp.id == self.switch_id][0]
-		ofproto = datapath.ofproto
-		parser = datapath.ofproto_parser
-		for ids in meter_rate:
-			if meter_rate[ids] < 0:
+	def modifyMeterRates(self, meter_rates):
+		for dp in self.datapaths.values():
+			if dp.id not in (2, 3):
 				continue
-			bands = []
-			dropband = parser.OFPMeterBandDrop(rate = int(meter_rate[ids]), burst_size = 0)
-			bands.append(dropband)
-			request = parser.OFPMeterMod(datapath=datapath, command=ofproto.OFPMC_MODIFY, flags=ofproto.OFPMF_KBPS, meter_id=ids, bands=bands)
-			datapath.send_msg(request)
-	# end def
+			ofp    = dp.ofproto
+			parser = dp.ofproto_parser
+			for m_id, rate in meter_rates.items():
+				if rate < 0:
+					continue
+				band = parser.OFPMeterBandDrop(rate=int(rate), burst_size=0)
+				req  = parser.OFPMeterMod(
+					datapath=dp,
+					command=ofp.OFPMC_MODIFY,
+					flags=ofp.OFPMF_KBPS,
+					meter_id=m_id,
+					bands=[band]
+				)
+				dp.send_msg(req)
 
 
 	@staticmethod
@@ -358,7 +363,7 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 
 
 	def getMeterRates(self):
-		self.configured_meters[1] = 40000  
+		self.configured_meters[1] = 50000  
 		self.configured_meters[2] = 30000 
-		self.configured_meters[3] = 20000  
-		self.configured_meters[4] = 10000   
+		self.configured_meters[3] = 15000  
+		self.configured_meters[4] = 5000   
