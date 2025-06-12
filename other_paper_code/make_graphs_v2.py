@@ -68,7 +68,7 @@ ax.plot(
 ax.set(
     xlabel="Time (s)",
     ylabel="Bandwidth (Mbps)",
-    title="Normalized 1 s-interval Bandwidth per Host and Total"
+    title="Normalized 1s-interval Bandwidth per Host and Total"
 )
 ax.yaxis.set_major_locator(ticker.MultipleLocator(5))
 ax.yaxis.set_minor_locator(ticker.MultipleLocator(1))

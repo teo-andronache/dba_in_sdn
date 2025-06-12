@@ -94,7 +94,18 @@ else:
             label=f"{host} Actual"
         )
 
-    # Total actual throughput (won't drop at end)
+    # Total demanded throughput 
+    total_demand = pivot_demand.sum(axis=1)
+    ax.plot(
+        total_demand.index,
+        total_demand.values,
+        color='grey',
+        linestyle='-',
+        linewidth=2,
+        label='Total Demanded Throughput'
+    )
+
+    # Total actual throughput 
     total_actual = pivot_actual.sum(axis=1)
     ax.plot(
         total_actual.index,

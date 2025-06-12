@@ -30,7 +30,8 @@ for fname in files:
             stream_id = row[5]
             client_port = row[4]
 
-            if interval.startswith("0.0-10"):
+            
+            if interval.startswith("0.0-31"):
                 continue
 
             # Detect start of a new connection
@@ -39,7 +40,6 @@ for fname in files:
                 last_stream = stream_id
                 last_client_port = client_port
 
-            # Skip summary intervals (e.g. 0.0-10.1)
             try:
                 start_str, end_str = interval.split("-")
                 float(start_str)  # validate format

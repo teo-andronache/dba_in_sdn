@@ -84,18 +84,45 @@ def main():
     # QoS meters and flows
     # -------------------
     # Base “nominal” rates (kbps) for each of four flows
-    bw = [35000, 25000, 15000, 5000]  # sum = 80 000 kbps
-    #bw = [39375, 28125, 16875,  5625]  # sum =  90 000 kbps
-    #bw = [43750, 31250, 18750,  6250]  # sum = 100 000 kbps
-    #bw = [48125, 34375, 20625,  6875]  # sum = 110 000 kbps
-    #bw = [52500, 37500, 22500,  7500]  # sum = 120 000 kbps
+    initial_meter_rates = [50000, 30000, 15000, 5000]
+
+    # Test cases keeping the initial meter ratios
+
+    # CASE 1: Same ratios as meter rates, sum up to 80 000 kbps
+    bw = [40000, 24000, 12000, 4000]
+
+    # CASE 2: Same ratios, sum up to 90 000 kbps
+    #bw = [45000, 27000, 13500, 4500]  # sum = 90 000 kbps
+
+    # CASE 3: Same ratios, sum up to 100 000 kbps
+    #bw = [50000, 30000, 15000, 5000]  # sum = 100 000 kbps
+
+    # CASE 4: Same ratios, sum up to 110 000 kbps
+    #bw = [55000, 33000, 16500, 5500]  # sum = 110 000 kbps
+
+    # CASE 5: Same ratios, sum up to 120 000 kbps
+    #bw = [60000, 36000, 18000, 6000]  # sum = 120 000 kbps
+
+    #########################################################
+
+    # CASE 6:  all classes are well under the nominal rate, 50% under the initial meter allocations
+    #bw = [25000, 15000, 7500, 2500]  # sum = 50 000 kbps
+
+    # CASE 7: class 1 is overperforming by 20% over the initial meter, class 2, 3, 4 are underperforming by 50% under the initial meter
+    #bw = [60000, 15000, 7500, 2500]  # sum = 90 000 kbps
+
+    # CASE 8: class 1 is underperforming by 50% under the initial meter, class 2, 3, 4 are overperforming by 20% over the initial meter
+    #bw = [25000, 36000, 18000, 6000]  # sum = 85 000 kbps
+
+    # CASE 9: classes 1,2,3 are underperforming by 20% under the initial meter, class 4 is overperforming by 100% over the initial meter
+    #bw = [40000, 24000, 12000, 10000]  # sum = 86 000 kkps
 
     # Install initial static meters on dpid=2 and dpid=3
     for dpid in (2,3):
-        addMeter(dpid=dpid, meter_id=1, rate=2*bw[0])  
-        addMeter(dpid=dpid, meter_id=2, rate=2*bw[1])  
-        addMeter(dpid=dpid, meter_id=3, rate=2*bw[2])  
-        addMeter(dpid=dpid, meter_id=4, rate=2*bw[3])  
+        addMeter(dpid=dpid, meter_id=1, rate=initial_meter_rates[0])  
+        addMeter(dpid=dpid, meter_id=2, rate=initial_meter_rates[1])  
+        addMeter(dpid=dpid, meter_id=3, rate=initial_meter_rates[2])  
+        addMeter(dpid=dpid, meter_id=4, rate=initial_meter_rates[3])  
 
     # Create one flow/meter pair per client (UDP dst ports 5111–5114)
     # on both switches (dpid=2,3)
@@ -124,21 +151,21 @@ def main():
     h8.cmd(f"iperf -s -u -p 5114 -i {ti} -y C >> Results/{folder}/server_h8.csv &")
 
     # ------------------------------------
-    # Main loop: every 10s, compute new rate
+    # Main loop: every interval, compute new rate
     # ------------------------------------
-    duration = 400                     # total experiment length (seconds)
+    duration = 300 
+    # Interval between bursts, each client runs for 31s then new bandwidth is computed
+    # One extra second is needed to allow better server-side reporting.
+    interval = 31                    
     start_time = time.time()
     elapsed = 0.0
 
     # Give each flow its own phase shift so they do NOT move in lock‐step
     phases = [0.0, math.pi/2, math.pi, 3*math.pi/2]
 
-    print("Starting 10s interval iperf bursts\n")
+    print(f"Starting {interval} interval iperf bursts\n")
 
     while elapsed < duration:
-        # How long each iperf client should run this round
-        interval = 11  # interval for iperf clients to run before changing rates; interval to sleep 
-
         t = time.time() - start_time
 
         # Compute a smooth ±20% sine‐wave demand with different phase for each flow
@@ -159,35 +186,17 @@ def main():
         b2 = f"{(y2/1000):.3f}m"
         b3 = f"{(y3/1000):.3f}m"
 
-        # Launch four iperf clients (one per left‐side host), each for 10s
+        # Launch four iperf clients (one per left‐side host), each for 31s
         h1.cmd(f"iperf -u -c {h5.IP()} -p 5111 -b {b0} -i {interval} -t {interval} -y C >> Results/{folder}/client_h1.csv &")
         h2.cmd(f"iperf -u -c {h6.IP()} -p 5112 -b {b1} -i {interval} -t {interval} -y C >> Results/{folder}/client_h2.csv &")
         h3.cmd(f"iperf -u -c {h7.IP()} -p 5113 -b {b2} -i {interval} -t {interval} -y C >> Results/{folder}/client_h3.csv &")
         h4.cmd(f"iperf -u -c {h8.IP()} -p 5114 -b {b3} -i {interval} -t {interval} -y C >> Results/{folder}/client_h4.csv &")
 
-        # Sleep exactly 10s; by the time we wake up, each iperf client has completed its 10s run
+        # Sleep exactly 31s; by the time we wake up, each iperf client has completed its 31s run
         time.sleep(interval)
         elapsed = time.time() - start_time
 
-        deleteFlow(dpid=2, udp_dst=5111, meter_id=1)
-        deleteFlow(dpid=3, udp_dst=5111, meter_id=1)
-        deleteFlow(dpid=2, udp_dst=5112, meter_id=2)
-        deleteFlow(dpid=3, udp_dst=5112, meter_id=2)
-        deleteFlow(dpid=2, udp_dst=5113, meter_id=3)
-        deleteFlow(dpid=3, udp_dst=5113, meter_id=3)
-        deleteFlow(dpid=2, udp_dst=5114, meter_id=4)
-        deleteFlow(dpid=3, udp_dst=5114, meter_id=4)
-
-        addFlow(dpid=2, udp_dst=5111, meter_id=1)
-        addFlow(dpid=3, udp_dst=5111, meter_id=1)
-        addFlow(dpid=2, udp_dst=5112, meter_id=2)
-        addFlow(dpid=3, udp_dst=5112, meter_id=2)
-        addFlow(dpid=2, udp_dst=5113, meter_id=3)
-        addFlow(dpid=3, udp_dst=5113, meter_id=3)
-        addFlow(dpid=2, udp_dst=5114, meter_id=4)
-        addFlow(dpid=3, udp_dst=5114, meter_id=4)
-
-        # Give the controller 10s to modify any meters if needed
+        # Give the controller 5s to modify any meters if needed
         time.sleep(5)
 
     # Finished

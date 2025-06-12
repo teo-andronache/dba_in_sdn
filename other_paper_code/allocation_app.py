@@ -76,12 +76,13 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 		while True:
 			for dp in self.datapaths.values():
 				if dp.id == 2 or dp.id == 3:
-					self._request_flow_stats(dp, port = 1)
+					self._request_flow_stats(dp)
+					self._request_meter_stats(dp)
 			hub.sleep(self.POLL_INTVL)
 	# end def
 
 
-	def _request_flow_stats(self, datapath, port):
+	def _request_flow_stats(self, datapath):
 		self.logger.debug('send meter request: %016x', datapath.id)
 		ofproto = datapath.ofproto
 		parser = datapath.ofproto_parser
@@ -91,30 +92,41 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 		datapath.send_msg(req)
 	# end def
 
+	def _request_meter_stats(self, datapath):
+		self.logger.debug(">>> sending MeterStatsRequest to dp %d", datapath.id)
+		ofp    = datapath.ofproto
+		parser = datapath.ofproto_parser
+		req = parser.OFPMeterStatsRequest(datapath, 0, 0)
+		datapath.send_msg(req)
+
+	@set_ev_cls(ofp_event.EventOFPMeterStatsReply, MAIN_DISPATCHER)
+	def meter_stats_reply_handler(self, ev):
+		for stat in ev.msg.body:
+			dp = ev.msg.datapath.id
+			m_id = stat.meter_id
+			drops = stat.band_stats[0].packet_count
+			self.logger.info("dp %d meter %d dropped %d pkts", dp, m_id, drops)
 
 	@set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
 	def flow_stats_reply_handler(self, ev):
-		# prepare the event messages for processing
 		if not self.prepareFlowEventMessages(ev):
 			return
-
-		# get the flow rates in the correct format in the queue and manage the queues
 		self.calcInstantaneousRate(ev)
-
-		# approximate the bw, this is needed for switch 2 only
+		if ev.msg.datapath.id != self.switch_id:
+			return
+		# need at least two timestamps and pocket samples
+		if len(self.flow_time) < 2 or any(len(self.rate_queue2[i]) < self.pocket
+										for i in self.configured_meters):
+			return
+		cur_dur = ev.msg.body[0].duration_sec - self.start_time
 		cur_rate = {}
-		new_rate = {}
-		matrix = {}
-		if ev.msg.datapath.id == self.switch_id:
-			cur_dur = ev.msg.body[0].duration_sec - self.start_time
-			self.logger.info(">>> Running meterAllocation at t=%.2f s", cur_dur)
-			for ids in self.configured_meters:
-				[cur_rate[ids], matrix[ids]] = self.approximateTrafficRate(self.flow_time, self.rate_queue2[ids])
-			new_rate = self.meterAllocation(self.configured_meters, cur_rate)
-			self.modifyMeterRates(new_rate)
-			self.logger.info(">>> Pushed new meters: %r", new_rate)
-	# end def
-
+		for i in self.configured_meters:
+			cur_rate[i], _ = self.approximateTrafficRate(self.flow_time,
+														self.rate_queue2[i])
+		new_rate = self.meterAllocation(self.configured_meters, cur_rate)
+		self.modifyMeterRates(new_rate)
+		self.logger.warn(">>> t=%.2f s; Pushed new meters: %r",
+						cur_dur, new_rate)
 
 	def meterAllocation(self, allocated, current):
 		need = {}
