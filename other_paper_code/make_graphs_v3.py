@@ -113,23 +113,26 @@ for host, color in colors.items():
     ax.plot(
         pivot_dem.index, pivot_dem[host],
         linestyle='-', color=color, alpha=0.8,
-        label=f"{host} Demanded ({loss_pct[host]:.1f}% loss)"
+        label=f"{host} Demand ({loss_pct[host]:.1f}% loss)"
     )
 
 # b) total demanded
 total_dem = pivot_dem.sum(axis=1)
+avg_dem = total_dem.mean()                        
 ax.plot(
     total_dem.index, total_dem.values,
     linestyle='-', color='grey', linewidth=2,
-    label='Total Demanded'
+    label=f"Aggregate Demand (avg {avg_dem:.1f} Mbps)" 
 )
+
 
 # c) total actual
 total_act = pivot_act.sum(axis=1)
+avg_act = total_act.mean()                          
 ax.plot(
     total_act.index, total_act.values,
     linestyle='-', color='black', linewidth=2.5,
-    label='Total Actual'
+    label=f"Aggregate Thrpt (avg {avg_act:.1f} Mbps)" 
 )
 
 # d) meter rates (dashed), trimmed after traffic ends
@@ -140,13 +143,13 @@ for i, host in enumerate(['H1','H2','H3','H4'], start=1):
     ax.plot(
         t_trim, m_trim,
         linestyle='--', color=colors[host], linewidth=1.5,
-        label=f"{host} rate (Meter Rate)"
+        label=f"{host} Meter"
     )
 
 # styling
 ax.set_xlabel("Time (s)")
 ax.set_ylabel("Bandwidth (Mbps)")
-ax.set_title("Per-Host Demanded vs. Meter Rates & Aggregate Actual Over Time")
+ax.set_title("Per-Host Demanded Bandwidth vs. Meter Rates & Aggregate Actual/Demanded Bandwidth Over Time")
 
 ax.yaxis.set_major_locator(ticker.MultipleLocator(5))
 ax.yaxis.set_minor_locator(ticker.MultipleLocator(1))

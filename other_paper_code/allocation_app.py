@@ -125,6 +125,7 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 														self.rate_queue2[i])
 		new_rate = self.meterAllocation(self.configured_meters, cur_rate)
 		self.modifyMeterRates(new_rate)
+		self.configured_meters = new_rate
 		self.logger.warn(">>> t=%.2f s; Pushed new meters: %r",
 						cur_dur, new_rate)
 

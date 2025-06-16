@@ -101,7 +101,7 @@ def main():
     #bw = [55000, 33000, 16500, 5500]  # sum = 110 000 kbps
 
     # CASE 5: Same ratios, sum up to 120 000 kbps
-    #bw = [60000, 36000, 18000, 6000]  # sum = 120 000 kbps
+    bw = [60000, 36000, 18000, 6000]  # sum = 120 000 kbps
 
     #########################################################
 
@@ -197,7 +197,7 @@ def main():
         elapsed = time.time() - start_time
 
         # Give the controller 5s to modify any meters if needed
-        time.sleep(5)
+        time.sleep(1)
 
     # Finished
     net.stop()

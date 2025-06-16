@@ -36,7 +36,8 @@ for fname in files:
 
             # Detect start of a new connection
             if interval.startswith("0.0-") and (stream_id != last_stream or client_port != last_client_port):
-                current_time = round(current_time, 1)
+                # we’ve just started a new 31 s burst, but the experiment slept 2 s before this
+                current_time = round(current_time + 2.0, 1)
                 last_stream = stream_id
                 last_client_port = client_port
 
