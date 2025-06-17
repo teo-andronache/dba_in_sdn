@@ -115,7 +115,7 @@ def main():
     #bw = [25000, 36000, 18000, 6000]  # sum = 85 000 kbps
 
     # CASE 9: classes 1,2,3 are underperforming by 20% under the initial meter, class 4 is overperforming by 100% over the initial meter
-    #bw = [40000, 24000, 12000, 10000]  # sum = 86 000 kkps
+    #bw = [40000, 24000, 12000, 10000]  # sum = 86 000 kbps
 
     # Install initial static meters on dpid=2 and dpid=3
     for dpid in (2,3):
